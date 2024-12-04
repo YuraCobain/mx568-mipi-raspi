@@ -18,7 +18,7 @@ jobs:
 
     - name: Build Docker Image
       run: |
-        docker buildx build --platform linux/arm64 --output type=docker -t vc_raspi:latest .
+        docker buildx build --platform linux/arm64 --output type=docker --load -t vc_raspi:latest .
 
     - name: Build Debian Package
       run: |
