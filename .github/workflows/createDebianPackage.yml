@@ -30,4 +30,3 @@ jobs:
       with:
         name: debian-package
         path: build/*.deb
-        platforms: linux/arm64
