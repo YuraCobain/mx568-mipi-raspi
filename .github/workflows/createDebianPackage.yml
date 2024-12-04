@@ -1,12 +1,10 @@
-
 name: Build Debian Package
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: lukechilds/dockerpi
-    arch: arm64
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout repository
@@ -39,3 +37,4 @@ jobs:
       with:
         name: debian-package
         path: build/*.deb
+        platforms: linux/arm64
