@@ -1,0 +1,12 @@
+################################################################################
+##  This is only a sub-configuration file for the raspi5 board periphery.
+##  Entry order is important!
+##
+##  The root configuration file is:
+##
+##    /boot/config_vc-mipi-driver-bcm2835.txt
+##
+################################################################################
+
+
+disable_touchscreen=1

@@ -1,0 +1,13 @@
+Package: vc-mipi-driver-bcm2712
+Version: 0.3.0
+Architecture: arm64
+Maintainer: Vision Components <info@vision-components.com>
+Installed-Size: 255
+Depends: dkms, linux-headers-generic, v4l-utils, whiptail
+Section: kernel
+Priority: optional
+Description: DKMS source for the ${DRIVER_NAME} driver
+ This package provides the source code for the Vision Components
+ MIPI CSI-2 camera driver kernel module for BCM2712.
+ .
+ This package contains the source to be built with dkms.

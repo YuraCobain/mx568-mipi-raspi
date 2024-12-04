@@ -1,0 +1,23 @@
+usr/src/vc-mipi-driver-bcm2712-0.3.1/dkms.conf usr/src/vc-mipi-driver-bcm2712-0.3.1/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/Makefile usr/src/vc-mipi-driver-bcm2712-0.3.1/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/overlays/*.txt usr/share/vc-mipi-driver-bcm2712-dkms/overlays/
+
+usr/share/vc-mipi-driver-bcm2712-dkms/debian/postinst usr/share/vc-mipi-driver-bcm2712-dkms/debian/
+usr/share/vc-mipi-driver-bcm2712-dkms/debian/postrm usr/share/vc-mipi-driver-bcm2712-dkms/debian/
+
+usr/src/vc-mipi-driver-bcm2712-0.3.1/overlays/*.dtbo  usr/src/vc-mipi-driver-bcm2712-0.3.1/overlays/
+
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_camera/*.c usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_camera/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_camera/Makefile usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_camera/
+
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/*.c usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/*.h usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/Makefile usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/Kbuild usr/src/vc-mipi-driver-bcm2712-0.3.1/vc_mipi_core/
+
+etc/udev/rules.d/99-camera-setup.rules usr/share/vc-mipi-driver-bcm2712-dkms/
+etc/udev/rules.d/99-camera-setup.rules etc/udev/rules.d/
+
+usr/local/bin/set_rpi5_pipeline.sh usr/local/bin/
+usr/local/bin/vc-config usr/local/bin/
+usr/src/vc-mipi-driver-bcm2712-0.3.1/vc-config usr/local/bin

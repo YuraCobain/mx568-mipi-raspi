@@ -1,0 +1,133 @@
+################################################################################
+# Makefile
+#
+# Mipi Module Sensor Driver Vision Components GmbH Ettlingen 2019-2022
+#
+# Author: Michael Steinel, MBE (Martin Engel)
+#
+################################################################################
+DTC ?= dtc
+DTC_FLAGS ?= -@ -I dts -O dtb -Wno-unit_address_vs_reg
+
+
+
+SENSOR_NAMES := vc-mipi-bcm2712-cam0
+SENSOR_NAMES += vc-mipi-bcm2712-cam1
+SENSOR_NAMES += vc-mipi-common-memory-contiguous
+
+
+################################################################################
+
+KERNEL_VER		  = $(shell uname -r)
+KERNEL_MODULE_DIR	= /lib/modules/$(KERNEL_VER)
+KERNEL_BUILD_DIR	= $(KERNEL_MODULE_DIR)/build
+KERNEL_I2C_DIR	  = $(KERNEL_MODULE_DIR)/kernel/drivers/media/i2c
+UBUNTU_CONFIG		= /boot/firmware/config.txt
+UBUNTU_LAYOUT		= $(shell [ -f $(UBUNTU_CONFIG) ] && echo 1 || echo 0 )
+ifeq ($(UBUNTU_LAYOUT), 1)
+BOOT_OVERLAYS_DIR	= /boot/firmware/overlays
+else
+BOOT_OVERLAYS_DIR	= /boot/overlays
+endif
+
+SENSORDRIVERS := vc_mipi_core/vc_mipi_core.ko
+SENSORDRIVERS += vc_mipi_core/vc_mipi_modules.ko
+SENSORDRIVERS += vc_mipi_camera/vc_mipi_camera.ko
+SENSOR_DRIVER := vc_mipi_core
+SENSOR_DRIVER += vc_mipi_modules
+SENSOR_DRIVER += vc_mipi_camera
+DEVICETREES	:= $(foreach sentype,$(SENSOR_NAMES),overlays/$(sentype).dtbo)
+DEVICETREES_RM := $(foreach sentype,$(SENSOR_NAMES),$(sentype).dtbo)
+
+obj-m := vc_mipi_core/
+obj-m += vc_mipi_camera/
+
+.PHONY: all copy-overlays
+
+
+
+dtbo: $(DEVICETREES)
+	@echo "\n### DTBOs will be installed in $(BOOT_OVERLAYS_DIR) ###\n"
+
+
+%.dtbo: %-overlay.dts
+	dtc -W no-unit_address_vs_reg -@ -I dts -O dtb  -o $@  $<
+
+# Add rule to build .dtbo from .dts
+overlays/%.dtbo: overlays/%.dts
+	$(DTC) $(DTC_FLAGS) -o $@ $<
+
+overlays/vc-mipi-bcm2712-cam0.dtbo: overlays/vc-mipi-bcm2712-cam0-overlay.dts
+	dtc -W no-unit_address_vs_reg -@ -I dts -O dtb  -o $@  $<
+
+build: $(KERNEL_BUILD_DIR)
+	$(MAKE) -C $(KERNEL_BUILD_DIR) M=$(PWD) modules
+all: $(KERNEL_BUILD_DIR) $(DEVICETREES) build
+	
+
+clean:
+	-make -C $(KERNEL_BUILD_DIR)  M=$(PWD)  clean
+	-rm -f $(SENSORDRIVERS)
+	-rm -f $(DEVICETREES)
+
+reload:
+	-sudo modprobe -r bcm2835-unicam
+	-sudo modprobe -r rp1_cfe
+	-sudo modprobe -r vc_mipi_camera
+	-sudo modprobe -r vc_mipi_modules
+	-sudo modprobe -r vc_mipi_core
+
+	-sudo modprobe bcm2835-unicam
+	-sudo modprobe rp1_cfe
+	-sudo modprobe vc_mipi_core
+	-sudo modprobe vc_mipi_modules
+	-sudo modprobe vc_mipi_camera
+unload:
+	-sudo modprobe -r vc_mipi_camera
+	-sudo modprobe -r vc_mipi_modules
+	-sudo modprobe -r vc_mipi_core
+
+
+dev:	clean all install reload
+
+install: all
+	sudo install -p -m 644  $(SENSORDRIVERS)	$(KERNEL_I2C_DIR)/
+	sudo install -p -m 644  $(DEVICETREES)	 $(BOOT_OVERLAYS_DIR)/
+	sudo /sbin/depmod -a $(shell uname -r)
+	@echo "--------------------------------------"
+	@echo
+	@echo "  Call  debian/postinst  for copying and activating the configuration file"
+	@echo "  /boot/config_vc-mipi-driver-bcm2712.txt"
+	@echo "  Edit the configuration file so that it fits your setup."
+	@echo
+	@echo "--------------------------------------"
+
+uninstall:
+	sudo rm -f $(foreach sentype,$(SENSOR_NAMES),$(KERNEL_I2C_DIR)/$(sentype).ko)
+	sudo rm -f $(foreach sencommon,$(SENSOR_DRIVER),$(KERNEL_I2C_DIR)/$(sencommon).ko)
+	sudo rm -f $(foreach dtbo,$(DEVICETREES_RM),$(BOOT_OVERLAYS_DIR)/$(dtbo))
+	sudo /sbin/depmod -a $(shell uname -r)
+	@echo "--------------------------------------"
+	@echo
+	@echo "  Call  debian/postrm  for deactivating the configuration file in your /boot/config.txt"
+	@echo "  You may remove the configuration file /boot/config_vc-mipi-driver-bcm2712.txt for cleanup"
+	@echo
+	@echo "--------------------------------------"
+
+
+$(KERNEL_BUILD_DIR):
+	@echo "--------------------------------------"
+	@echo
+	@echo "  Error:  Cannot continue due to the absence of the directory"
+	@echo
+	@echo "	$(KERNEL_BUILD_DIR)"
+	@echo
+	@echo "  You can try to fix it by installing the kernel header files package."
+	@echo "  The following command may do so:"
+	@echo
+	@echo "	sudo  apt-get install  raspberrypi-kernel-headers"
+	@echo
+	@echo "--------------------------------------"
+	@false
+
+

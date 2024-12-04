@@ -1,0 +1,17 @@
+# debian/not-installed
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/.git*
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/.*.cmd
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/*.ko
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/*.mod*
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/*.o*
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/.*.o.d
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/modules.order
+usr/src/vc-mipi-driver-bcm2712-0.3.1/Module.symvers
+usr/src/vc-mipi-driver-bcm2712-0.3.1/Module.symvers.cmd
+usr/src/vc-mipi-driver-bcm2712-0.3.1/.modules.order.cmd
+usr/src/vc-mipi-driver-bcm2712-0.3.1/.Module.symvers.cmd
+
+usr/src/vc-mipi-driver-bcm2712-0.3.1/modules.order
+usr/src/vc-mipi-driver-bcm2712-0.3.1/**/*.dts
+boot/firmware/config_vc-mipi-driver-bcm2712.txt
+boot/firmware/config_vc-mipi-driver-bcm2712-raspi5.txt
