@@ -33,7 +33,7 @@ jobs:
         cd build
         sudo dpkg-buildpackage -us -uc -b
     - name: Upload Debian Package
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: debian-package
         path: build/*.deb
