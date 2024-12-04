@@ -1021,23 +1021,12 @@ static int vc_probe(struct i2c_client *client)
                 goto error_power_off;
 
         ret = vc_check_hwcfg(cam, dev); 
-        // // TODO place
-        // {
-        //         struct imx_dtentry dtentry;                     // MS
-        //         ret = vc_rpi_devicetree_read(client, &dtentry); // MS TEST DT entries
 
-        //         /* Set and check the number of MIPI CSI2 data lanes */
-        //         ret = vc_core_set_num_lanes(cam, dtentry.data_lanes);
-
-        //         cam->state.mode = dtentry.sensor_mode;
-        //         ret = -1;
-        //         vc_mod_set_mode(cam, &ret); // MS TEST sensor init
-        //         ret = 0;
-        // }
         if (ret)
                 goto error_power_off;
 
         mutex_init(&device->mutex);
+        vc_mod_set_mode(cam, &ret); 
         ret = vc_sd_init(device);
         if (ret)
                 goto error_handler_free;
