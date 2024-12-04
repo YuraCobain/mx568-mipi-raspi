@@ -20,10 +20,13 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y dpkg-dev debhelper
+        docker buildx create --name mybuilder
+        docker buildx use mybuilder
+        docker buildx build --platform linux/arm64 -t vc_raspi:latest .
 
     - name: Build Debian Package
       run: |
-        docker run --platform linux/arm64 -v ${PWD}:/workspace -w /workspace debian:bookworm  bash /workspace/createDebianPackage.sh
+        docker run --platform linux/arm64 -v ${PWD}:/workspace -w /workspace vc_raspi:latest /workspace/createDebianPackage.sh
     - name: Upload Debian Package
       uses: actions/upload-artifact@v4
       with:
