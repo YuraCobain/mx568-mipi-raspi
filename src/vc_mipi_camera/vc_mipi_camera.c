@@ -834,6 +834,8 @@ static int vc_sd_init(struct vc_device *device)
         }
         // Hook the control handler into the driver
         device->sd.ctrl_handler = &device->ctrl_handler;
+        device->cam.ctrl.blacklevel.max = 100000; // See https://github.com/VC-MIPI-modules/vc_mipi_nvidia/blob/master/doc/BLACK_LEVEL.md
+
 
         // Add controls
         ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_EXPOSURE, &device->cam.ctrl.exposure);

@@ -1200,7 +1200,6 @@ int vc_mod_set_mode(struct vc_cam *cam, int *reset)
         }
 
         state->mode = mode;
-        ctrl->blacklevel.max = vc_core_get_mode(cam,num_lanes,format, binning).blacklevel.max;
         *reset = 1;
 
         return ret;
