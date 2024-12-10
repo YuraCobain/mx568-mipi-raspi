@@ -62,6 +62,15 @@ static inline struct vc_cam *to_vc_cam(struct v4l2_subdev *sd)
         return &device->cam;
 }
 
+static struct vc_control64 linkfreq  = {
+    .min = 0,
+    .max = 0,
+    .def = 0,
+};
+static        struct vc_control hblank; //TODO Check implementation
+static        struct vc_control vblank; //TODO Check implementation
+static        struct vc_control pixelrate; //TODO Check implementation
+
 // --- v4l2_subdev_core_ops ---------------------------------------------------
 
 static void vc_set_power(struct vc_device *device, int on)
@@ -165,7 +174,7 @@ static int vc_sd_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *control)
 
         case V4L2_CID_ANALOGUE_GAIN: // MS
         case V4L2_CID_GAIN:
-                return vc_sen_set_gain(cam, control->value);
+                return vc_sen_set_gain(cam, control->value, false);
 
         case V4L2_CID_BLACK_LEVEL:
                 return vc_sen_set_blacklevel(cam, control->value);
@@ -230,7 +239,7 @@ static int vc_sd_s_stream(struct v4l2_subdev *sd, int enable)
                 if (!ret && reset)
                 {
                         ret |= vc_sen_set_exposure(cam, cam->state.exposure);
-                        ret |= vc_sen_set_gain(cam, cam->state.gain);
+                        ret |= vc_sen_set_gain(cam, cam->state.gain, false);
                         ret |= vc_sen_set_blacklevel(cam, cam->state.blacklevel);
                 }
 
@@ -518,10 +527,10 @@ static void vc_update_clk_rates(struct vc_cam *cam)
         int bit_depth = vc_get_bit_depth(cam->desc.modes[mode].format);
 
         // CAUTION: DDR rate is doubled freq
-        cam->ctrl.linkfreq.max = *(__u32 *)&(cam->desc.modes[mode].data_rate[0]) / 2;
-        cam->ctrl.linkfreq.def = cam->ctrl.linkfreq.max;
-        cam->ctrl.pixelrate.max = (cam->ctrl.linkfreq.max * 2 * num_lanes) / bit_depth;
-        cam->ctrl.pixelrate.def = cam->ctrl.pixelrate.max;
+        linkfreq.max = *(__u32 *)&(cam->desc.modes[mode].data_rate[0]) / 2;
+        linkfreq.def = linkfreq.max;
+        pixelrate.max = (linkfreq.max * 2 * num_lanes) / bit_depth;
+        pixelrate.def = pixelrate.max;
 
 #if 1 // TODO LC_IMX296_TEST // enable for TEST IMX296 with libcamera
 #define IMX296_PIXEL_ARRAY_WIDTH 1456
@@ -533,15 +542,15 @@ static void vc_update_clk_rates(struct vc_cam *cam)
          * fixed to 74.25 MHz. The HMAX value is currently fixed to 1100,
          * convert it to a number of pixels based on the nominal pixel rate.
          */
-        cam->ctrl.hblank.max = 1100 * 1188000000ULL / 10 / 74250000 - IMX296_PIXEL_ARRAY_WIDTH;
-        cam->ctrl.hblank.min = cam->ctrl.hblank.max;
-        cam->ctrl.hblank.def = cam->ctrl.hblank.max;
+        hblank.max = 1100 * 1188000000ULL / 10 / 74250000 - IMX296_PIXEL_ARRAY_WIDTH;
+        hblank.min = hblank.max;
+        hblank.def = hblank.max;
         // TODO if (hblank_ctrl)
         //          hblank_ctrl->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 
-        cam->ctrl.vblank.min = 30;
-        cam->ctrl.vblank.max = 1048575 - IMX296_PIXEL_ARRAY_HEIGHT;
-        cam->ctrl.vblank.def = cam->ctrl.vblank.min;
+        vblank.min = 30;
+        vblank.max = 1048575 - IMX296_PIXEL_ARRAY_HEIGHT;
+        vblank.def = vblank.min;
 #endif
 #endif
 }
@@ -628,6 +637,20 @@ static int vc_ctrl_init_ctrl(struct vc_device *device, struct v4l2_ctrl_handler 
         ctrl = v4l2_ctrl_new_std(&device->ctrl_handler, &vc_ctrl_ops, id, control->min, control->max, 1, control->def);
         if (ctrl == NULL)
         {
+                vc_err(dev, "%s(): Failed to init 0x%08x ctrl\n", __func__, id);
+                return -EIO;
+        }
+
+        return 0;
+}
+static int vc_ctrl_init_ctrl_special(struct vc_device *device, struct v4l2_ctrl_handler *hdl, int id, int min, int max, int def)
+{
+        struct i2c_client *client = device->cam.ctrl.client_sen;
+        struct device *dev = &client->dev;
+        struct v4l2_ctrl *ctrl;
+
+        ctrl = v4l2_ctrl_new_std(&device->ctrl_handler, &vc_ctrl_ops, id, min, max, 1, def);
+        if (ctrl == NULL) {
                 vc_err(dev, "%s(): Failed to init 0x%08x ctrl\n", __func__, id);
                 return -EIO;
         }
@@ -815,6 +838,20 @@ static const struct v4l2_ctrl_config ctrl_roi_position = {
     .step = 1,
     .def = 0,
 };
+
+static const struct v4l2_ctrl_config ctrl_blacklevel = {
+    .ops = &vc_ctrl_ops,
+    .id = V4L2_CID_BLACK_LEVEL, // See https://github.com/VC-MIPI-modules/vc_mipi_nvidia/blob/master/doc/BLACK_LEVEL.md
+    .name = "Black Level",
+    .type = V4L2_CTRL_TYPE_INTEGER,
+    .flags = V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
+    .min = 0,
+    .max = 100000,
+    .step = 1,
+    .def = 0,
+};
+
+
 #endif
 static int vc_sd_init(struct vc_device *device)
 {
@@ -834,14 +871,13 @@ static int vc_sd_init(struct vc_device *device)
         }
         // Hook the control handler into the driver
         device->sd.ctrl_handler = &device->ctrl_handler;
-        device->cam.ctrl.blacklevel.max = 100000; // See https://github.com/VC-MIPI-modules/vc_mipi_nvidia/blob/master/doc/BLACK_LEVEL.md
-
 
         // Add controls
         ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_EXPOSURE, &device->cam.ctrl.exposure);
-        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_GAIN, &device->cam.ctrl.gain);
-        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_BLACK_LEVEL, &device->cam.ctrl.blacklevel);
-        ret |= vc_ctrl_init_custom_ctrl(device, &device->ctrl_handler,&ctrl_orientation);
+        ret |= vc_ctrl_init_ctrl_special(device, &device->ctrl_handler, V4L2_CID_GAIN, 
+                0, device->cam.ctrl.again.max_mdB + device->cam.ctrl.dgain.max_mdB, 0);;
+        ret |= vc_ctrl_init_custom_ctrl(device, &device->ctrl_handler, &ctrl_blacklevel);
+        ret |= vc_ctrl_init_custom_ctrl(device, &device->ctrl_handler, &ctrl_orientation);
 
         ret |= vc_ctrl_init_custom_ctrl(device, &device->ctrl_handler, &ctrl_trigger_mode);
         ret |= vc_ctrl_init_custom_ctrl(device, &device->ctrl_handler, &ctrl_rotation);
@@ -852,11 +888,11 @@ static int vc_sd_init(struct vc_device *device)
         ret |= vc_ctrl_init_custom_ctrl(device, &device->ctrl_handler, &ctrl_roi_position);
         // MS these are mandadory for libcamera:
         // vc_update_clk_rates(&device->cam); // TODO seek suitable place for function
-        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_PIXEL_RATE, &device->cam.ctrl.pixelrate);
-        ret |= vc_ctrl_init_ctrl_lfreq(device, &device->ctrl_handler, V4L2_CID_LINK_FREQ, &device->cam.ctrl.linkfreq);
-        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_HBLANK, &device->cam.ctrl.hblank);
-        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_VBLANK, &device->cam.ctrl.vblank);
-        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_ANALOGUE_GAIN, &device->cam.ctrl.gain);
+        ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_PIXEL_RATE, &pixelrate);
+        ret |= vc_ctrl_init_ctrl_lfreq(device, &device->ctrl_handler, V4L2_CID_LINK_FREQ, &linkfreq);
+        // ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_HBLANK, &device->cam.ctrl.hblank);
+        // ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_VBLANK, &device->cam.ctrl.vblank);
+        // ret |= vc_ctrl_init_ctrl(device, &device->ctrl_handler, V4L2_CID_ANALOGUE_GAIN, &device->cam.ctrl.gain);
         ret |= vc_ctrl_init_ctrl_lc(device, &device->ctrl_handler);
                 // Set the standard format
         struct v4l2_subdev_format fmt = {

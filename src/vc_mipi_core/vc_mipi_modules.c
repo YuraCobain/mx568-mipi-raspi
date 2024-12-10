@@ -6,6 +6,25 @@
         struct device *dev = &ctrl->client_mod->dev; \
         vc_notice(dev, "%s(): Initialising module control for %s\n", __FUNCTION__, camera);
 
+#define AGAIN_LIN(_max, _max_mdB) \
+        ctrl->again = (vc_gain) { .max = _max, .max_mdB = _max_mdB, \
+        .type = GAIN_LINEAR};
+
+#define AGAIN_LOG(_max, _max_mdB, _c0, _c1) \
+        ctrl->again = (vc_gain) { .max = _max, .max_mdB = _max_mdB, \
+        .type = GAIN_LOGARITHMIC, .c0 = _c0, .c1 = _c1 };
+
+#define AGAIN_REC(_max, _max_mdB, _c0, _c1) \
+        ctrl->again = (vc_gain) { .max = _max, .max_mdB = _max_mdB, \
+        .type = GAIN_RECIPROCAL, .c0 = _c0, .c1 = _c1 };
+
+#define AGAIN_FRA(_max, _max_mdB) \
+        ctrl->again = (vc_gain) { .max = _max, .max_mdB = _max_mdB, \
+        .type = GAIN_FRACTIONAL};
+
+#define DGAIN(_max, _max_mdB) \
+        ctrl->dgain = (vc_gain) { .max = _max, .max_mdB = _max_mdB };
+
 #define FRAME(_left, _top, _width, _height) \
         ctrl->frame = (vc_frame) { .left = _left, .top = _top, .width = _width, .height = _height };
 
@@ -31,7 +50,7 @@
 
 int vc_mod_is_color_sensor(struct vc_desc *desc)
 {
-        if (desc->sen_type[0]) {
+        if (desc->sen_type) {
                 __u32 len = strnlen(desc->sen_type, 16);
                 if (len > 0 && len < 17) {
                         return *(desc->sen_type + len - 1) == 'C';
@@ -39,11 +58,10 @@ int vc_mod_is_color_sensor(struct vc_desc *desc)
         }
         return 0;
 }
-EXPORT_SYMBOL(vc_mod_is_color_sensor);
+
 static void vc_init_ctrl(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         ctrl->exposure                  = (vc_control) { .min =   1, .max = 100000000, .def =  10000 };
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       255, .def =      0 };
         ctrl->framerate                 = (vc_control) { .min =   0, .max =   1000000, .def =      0 };
 
         ctrl->csr.sen.mode              = (vc_csr2) { .l = desc->csr_mode, .m = 0x0000 };
@@ -56,8 +74,8 @@ static void vc_init_ctrl(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->csr.sen.shs.h             = desc->csr_exposure_h;
         ctrl->csr.sen.shs.u             = 0;
         
-        ctrl->csr.sen.gain.l            = desc->csr_gain_l;
-        ctrl->csr.sen.gain.m            = desc->csr_gain_h;
+        ctrl->csr.sen.again.l            = desc->csr_gain_l;
+        ctrl->csr.sen.again.m            = desc->csr_gain_h;
 
         ctrl->csr.sen.h_start.l         = desc->csr_h_start_l;
         ctrl->csr.sen.h_start.m         = desc->csr_h_start_h;
@@ -93,7 +111,7 @@ static void vc_init_ctrl_imx183_base(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
 static void vc_init_ctrl_imx252_base(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       511, .def =      0 };
+        AGAIN_LIN(480, 48000)
 
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x0210, .m = 0x0211, .h = 0x0212, .u = 0x0000 };
         ctrl->csr.sen.hmax              = (vc_csr4) { .l = 0x0214, .m = 0x0215, .h = 0x0000, .u = 0x0000 };
@@ -108,7 +126,7 @@ static void vc_init_ctrl_imx252_base(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
 static void vc_init_ctrl_imx290_base(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       255, .def =      0 };
+        AGAIN_LIN(240, 72000)
         
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x3018, .m = 0x3019, .h = 0x301A, .u = 0x0000 };
         ctrl->csr.sen.mode_standby      = 0x01;
@@ -126,7 +144,7 @@ static void vc_init_ctrl_imx290_base(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
 static void vc_init_ctrl_imx296_base(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
         
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x3010, .m = 0x3011, .h = 0x3012, .u = 0x0000 };
         ctrl->csr.sen.mode              = (vc_csr2) { .l = 0x3000, .m = 0x300A };
@@ -150,12 +168,12 @@ static void vc_init_ctrl_imx178(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         vc_init_ctrl_imx183_base(ctrl, desc);
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x3015, .m = 0x3016 };
 
         FRAME(0, 0, 3072, 2048)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     680,    9,  0x1ffff,  2126,  255,   50,   2698560)
         MODE( 1, 2, FORMAT_RAW10, 0,     840,    9,  0x1ffff,  2126, 1023,   50,   2698560)
@@ -177,12 +195,12 @@ static void vc_init_ctrl_imx183(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         vc_init_ctrl_imx183_base(ctrl, desc);
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =     0x7a5, .def =      0 };
+        AGAIN_LOG(1957, 27000, 2048, 2048)
         
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x0045, .m = 0x0000 };
 
         FRAME(0, 0, 5440, 3648)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,    1440,    5,  0x1ffff,  3728,  255,   50,   3599997)
         MODE( 1, 2, FORMAT_RAW10, 0,    1440,    5,  0x1ffff,  3728,  255,   50,   3599997)
@@ -202,12 +220,12 @@ static void vc_init_ctrl_imx226(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         vc_init_ctrl_imx183_base(ctrl, desc);
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =     0x7a5, .def =      0 };
+        AGAIN_LOG(1957, 27000, 2048, 2048)
         
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x0045, .m = 0x0000 };
 
         FRAME(0, 0, 3904, 3000)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,    1072,    5,  0x1ffff,  3079,  255,   50,   2698560)
         MODE( 1, 2, FORMAT_RAW10, 0,    1072,    5,  0x1ffff,  3079,  255,   50,   2698560)
@@ -233,7 +251,7 @@ static void vc_init_ctrl_imx250(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx252_base(ctrl, desc);
 
         FRAME(0, 0, 2432, 2048)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     540,   10,  0xfffff,  2094,  255,   15,   1580040)
         MODE( 1, 2, FORMAT_RAW10, 0,     660,   10,  0xfffff,  2094, 1023,   60,   1580040)
@@ -254,7 +272,7 @@ static void vc_init_ctrl_imx252(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx252_base(ctrl, desc);
 
         FRAME(0, 0, 2048, 1536)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     460,   10,  0xfffff,  1582,  255,   15,   1063754)
         MODE( 1, 2, FORMAT_RAW10, 0,     560,   10,  0xfffff,  1582, 1023,   60,   1063754)
@@ -275,7 +293,7 @@ static void vc_init_ctrl_imx264(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx252_base(ctrl, desc);
 
         FRAME(0, 0, 2432, 2048)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     996,   10,  0xfffff,  2100,  255,   15,   1580040)
         MODE( 1, 2, FORMAT_RAW10, 0,     996,   10,  0xfffff,  2100, 1023,   60,   1580040)
@@ -293,7 +311,7 @@ static void vc_init_ctrl_imx265(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx252_base(ctrl, desc);
 
         FRAME(0, 0, 2048, 1536)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     846,   10,  0xfffff,  1587,  255,  255,   1580040)
         MODE( 1, 2, FORMAT_RAW10, 0,     846,   10,  0xfffff,  1587, 1023, 1023,   1580040)
@@ -311,7 +329,7 @@ static void vc_init_ctrl_imx273(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx252_base(ctrl, desc);
 
         FRAME(0, 0, 1440, 1080)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     336,   15,  0xfffff,  1130,  255,   15,    519230)
         MODE( 1, 2, FORMAT_RAW10, 0,     420,   15,  0xfffff,  1130, 1023,   60,    519230)
@@ -331,7 +349,7 @@ static void vc_init_ctrl_imx290(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         vc_init_ctrl_imx290_base(ctrl, desc);
 
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW10, 0,     550,    1,  0x3ffff, 0x465,  511,   60,         0)
         MODE( 1, 2, FORMAT_RAW12, 0,     550,    1,  0x3ffff, 0x465,  511,  240,         0)
@@ -350,7 +368,7 @@ static void vc_init_ctrl_imx296(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx296_base(ctrl, desc);
 
         FRAME(0, 0, 1440, 1080)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 1, FORMAT_RAW10, 0,    1100,    5,  0xfffff,  1110, 1023,   60,    883008)
 }
@@ -366,7 +384,7 @@ static void vc_init_ctrl_imx297(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx296_base(ctrl, desc);
 
         FRAME(0, 0, 704, 540) // 720 isn't divisible by 32
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 1, FORMAT_RAW10, 0,     550,    5,  0xfffff,  1110,  511,   60,    883008)
 }
@@ -392,7 +410,7 @@ static void vc_init_ctrl_imx327(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         vc_init_ctrl_imx290_base(ctrl, desc);
 
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW10, 0,    1100,    1,  0x3ffff, 0x465,  511,   60,         0)
         MODE( 1, 2, FORMAT_RAW12, 0,    1100,    1,  0x3ffff, 0x465,  511,  240,         0)
@@ -408,7 +426,7 @@ static void vc_init_ctrl_imx335(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX335")
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =      0xff, .def =      0 };
+        AGAIN_LIN(240, 72000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x3302, .m = 0x3303 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x3030, .m = 0x3031, .h = 0x3032, .u = 0x0000 };
@@ -416,7 +434,7 @@ static void vc_init_ctrl_imx335(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->csr.sen.mode_operating    = 0x00;
 
         FRAME(7, 52, 2592, 1944)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW10, 0,   0x113,    9,  0xfffff,  4500, 1023,   50,         0)
         MODE( 1, 2, FORMAT_RAW12, 0,   0x226,    9,  0xfffff,  4500, 1023,   50,         0)
@@ -440,7 +458,7 @@ static void vc_init_ctrl_imx392(struct vc_ctrl *ctrl, struct vc_desc* desc)
         vc_init_ctrl_imx252_base(ctrl, desc);
 
         FRAME(0, 0, 1920, 1200)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     448,   10,  0xfffff,  1252,  255,   15,   1063754)
         MODE( 1, 2, FORMAT_RAW10, 0,     530,   10,  0xfffff,  1252, 1023,   60,   1063754)
@@ -463,6 +481,7 @@ static void vc_init_ctrl_imx392(struct vc_ctrl *ctrl, struct vc_desc* desc)
 #define IMX412_BINNING_TYPE            0x0901
 #define IMX412_BINNING_WEIGHTING       0x0902
 #define IMX412_BINNING_WEIGHTING_AVG   0x00
+#define IMX412_BINNING_WEIGHTING_SUM   0x01
 #define IMX412_BINNING_TYPE_EXT_EN     0x3f42
 #define IMX412_BINNING_TYPE_H_EXT      0x3f43
 #define IMX412_BLACKLEVEL_ENABLE       0x3030
@@ -471,18 +490,30 @@ static void vc_init_ctrl_imx412(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX412")
         
-        ctrl->gain                      = (vc_control) { .min =   0, .max =      1023, .def =      0 };
+        AGAIN_REC(978, 13400, 1024, 1024)
+        DGAIN(0x0fff, 12000);
 
+        ctrl->csr.sen.dgain             = (vc_csr2) { .l = 0x020f, .m = 0x020e };
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x3033, .m = 0x3032 };
-
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x0341, .m = 0x0340, .h = 0x0000, .u = 0x0000 };
         ctrl->csr.sen.shs               = (vc_csr4) { .l = 0x0203, .m = 0x0202, .h = 0x0000, .u = 0x0000 };
 
         FRAME(0, 0, 4032, 3040)
-        //all read out         binning  hmax  vmax      vmax    vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax    vmax  blkl  blkl  retrigger
         //                      mode           min       max     def   max   def
         MODE( 0, 2, FORMAT_RAW10, 0,     436,   10,   0xffff, 0x0c14, 1023,   40,         0)
         MODE( 1, 4, FORMAT_RAW10, 0,     218,   10,   0xffff, 0x0c14, 1023,   40,         0)
+
+        MODE( 2, 2, FORMAT_RAW10, 1,     436,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 3, 4, FORMAT_RAW10, 1,     218,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 4, 2, FORMAT_RAW10, 2,     436,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 5, 4, FORMAT_RAW10, 2,     218,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 6, 2, FORMAT_RAW10, 3,     436,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 7, 4, FORMAT_RAW10, 3,     218,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 8, 2, FORMAT_RAW10, 4,     436,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE( 9, 4, FORMAT_RAW10, 4,     218,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE(10, 2, FORMAT_RAW10, 5,     436,   10,   0xffff, 0x0624, 1023,   40,         0)
+        MODE(11, 4, FORMAT_RAW10, 5,     218,   10,   0xffff, 0x0624, 1023,   40,         0)
 
         ctrl->clk_ext_trigger           = 27000000;
         ctrl->clk_pixel                 = 27000000;
@@ -494,32 +525,31 @@ static void vc_init_ctrl_imx412(struct vc_ctrl *ctrl, struct vc_desc* desc)
         BINNING_END(ctrl->binnings[0])
         BINNING_START(ctrl->binnings[1], 1, 2)
                 { IMX412_BINNING_MODE, IMX412_BINNING_MODE_ENABLE },
-                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_AVG },
+                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_SUM },
                 { IMX412_BINNING_TYPE, 0x12 },
                 { IMX412_BLACKLEVEL_ENABLE, 0x01 }
         BINNING_END(ctrl->binnings[1])
         BINNING_START(ctrl->binnings[2], 2, 2)
                 { IMX412_BINNING_MODE, IMX412_BINNING_MODE_ENABLE },
-                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_AVG },
+                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_SUM },
                 { IMX412_BINNING_TYPE, 0x22 },
                 { IMX412_BLACKLEVEL_ENABLE, 0x01 }
         BINNING_END(ctrl->binnings[2])
         BINNING_START(ctrl->binnings[3], 4, 2)
                 { IMX412_BINNING_MODE, IMX412_BINNING_MODE_ENABLE },
-                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_AVG },
+                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_SUM },
                 { IMX412_BINNING_TYPE, 0x42 },
                 { IMX412_BLACKLEVEL_ENABLE, 0x01 }
         BINNING_END(ctrl->binnings[3])
         BINNING_START(ctrl->binnings[4], 8, 2)
                 { IMX412_BINNING_MODE, IMX412_BINNING_MODE_ENABLE },
-                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_AVG },
+                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_SUM },
                 { IMX412_BINNING_TYPE, 0x82 },
                 { IMX412_BLACKLEVEL_ENABLE, 0x01 }
         BINNING_END(ctrl->binnings[4])
-
         BINNING_START(ctrl->binnings[5], 16, 2)
                 { IMX412_BINNING_MODE, IMX412_BINNING_MODE_ENABLE },
-                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_AVG },
+                { IMX412_BINNING_WEIGHTING, IMX412_BINNING_WEIGHTING_SUM },
                 { IMX412_BINNING_TYPE, 0x02 },
                 { IMX412_BINNING_TYPE_EXT_EN, 0x01 },
                 { IMX412_BINNING_TYPE_H_EXT, 0x01 },
@@ -533,6 +563,7 @@ static void vc_init_ctrl_imx412(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->flags                    |= FLAG_INCREASE_FRAME_RATE;
         ctrl->flags                    |= FLAG_IO_ENABLED;
         ctrl->flags                    |= FLAG_TRIGGER_SLAVE;
+        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -543,7 +574,7 @@ static void vc_init_ctrl_imx415(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX415")
         
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       240, .def =      0 };
+        AGAIN_LIN(240, 72000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x30e2, .m = 0x30e3 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x3024, .m = 0x3025, .h = 0x3026, .u = 0x0000 };
@@ -551,7 +582,7 @@ static void vc_init_ctrl_imx415(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->csr.sen.mode_operating    = 0x00;
 
         FRAME(0, 0, 3840, 2160)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW10, 0,    1042,    8,  0xfffff, 0x8ca, 1023,   50,         0)
         MODE( 1, 4, FORMAT_RAW10, 0,     551,    8,  0xfffff, 0x8ca, 1023,   50,         0)
@@ -575,13 +606,15 @@ static void vc_init_ctrl_imx462(struct vc_ctrl *ctrl, struct vc_desc *desc)
 
         vc_init_ctrl_imx290_base(ctrl, desc);
 
-        ctrl->gain    = (vc_control) { .min = 0, .max = 238,     .def = 0 };
-
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW10, 0,    1100,    1,  0x3ffff, 0x465,  511,   60,         0)
         MODE( 1, 4, FORMAT_RAW10, 0,     550,    1,  0x3ffff, 0x465,  511,   60,         0)
 }
+
+// ------------------------------------------------------------------------------------------------
+//  Settings for IMX565 (Rev.03)
+//  12.4 MegaPixel Pregius S
 
 #define IMX56X_HV_MODE                  0x303c
 #define IMX56X_BINNING_MODE_DISABLE     0x00
@@ -598,17 +631,13 @@ static void vc_init_ctrl_imx462(struct vc_ctrl *ctrl, struct vc_desc *desc)
 #define IMX56X_GAINDLY                  0x30e5
 #define IMX56X_GSDLY                    0x30e6
 
-// ------------------------------------------------------------------------------------------------
-//  Settings for IMX565 (Rev.03)
-//  12.4 MegaPixel Pregius S
-
 static void vc_init_ctrl_imx565(struct vc_ctrl *ctrl, struct vc_desc *desc)
 {
         INIT_MESSAGE("IMX565")
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
         
-        ctrl->csr.sen.gain              = (vc_csr2) { .l = 0x3514, .m = 0x3515 };
+        ctrl->csr.sen.again             = (vc_csr2) { .l = 0x3514, .m = 0x3515 };
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x35b4, .m = 0x35b5 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x30d4, .m = 0x30d5, .h = 0x30d6, .u = 0x0000 };
         ctrl->csr.sen.hmax              = (vc_csr4) { .l = 0x30d8, .m = 0x30d9, .h = 0x0000, .u = 0x0000 };
@@ -618,7 +647,7 @@ static void vc_init_ctrl_imx565(struct vc_ctrl *ctrl, struct vc_desc *desc)
 
         FRAME(0, 0, 4128, 3000)
 
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,    1070,   18, 0xffffff, 0xc2c,  255,   15,   2410776)
         MODE( 1, 2, FORMAT_RAW10, 0,    1328,   16, 0xffffff, 0xc2a, 1023,   60,   2990142)
@@ -627,7 +656,7 @@ static void vc_init_ctrl_imx565(struct vc_ctrl *ctrl, struct vc_desc *desc)
         MODE( 4, 4, FORMAT_RAW10, 0,     684,   26, 0xffffff, 0xc3a, 1023,   60,   1546074)
         MODE( 5, 4, FORMAT_RAW12, 0,     812,   22, 0xffffff, 0xc34, 4095,  240,   1833030)
 
-        //binning
+        // Binning
         MODE( 6, 2, FORMAT_RAW08, 1,     554,  32, 0xffffff, 0x644,  255,   15,    638982)
         MODE( 7, 2, FORMAT_RAW10, 1,     683,  28, 0xffffff, 0x640, 1023,   60,    785808)
         MODE( 8, 2, FORMAT_RAW12, 1,     812,  24, 0xffffff, 0x638, 4095,  240,    931878)
@@ -635,7 +664,7 @@ static void vc_init_ctrl_imx565(struct vc_ctrl *ctrl, struct vc_desc *desc)
         MODE(10, 4, FORMAT_RAW10, 1,     361,  44, 0xffffff, 0x65c, 1023,   60,    420552)
         MODE(11, 4, FORMAT_RAW12, 1,     425,  40, 0xffffff, 0x654, 4095,  240,    493884)
         
-        // special registers for binning mode
+        // Special registers for binning mode
         BINNING_MODE_REGS(  6, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x1c }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x0c } );
         BINNING_MODE_REGS(  7, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x18 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x0c } );
         BINNING_MODE_REGS(  8, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x14 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x08 } );
@@ -657,13 +686,11 @@ static void vc_init_ctrl_imx565(struct vc_ctrl *ctrl, struct vc_desc *desc)
 
         ctrl->flags                     = FLAG_EXPOSURE_SONY;
         ctrl->flags                    |= FLAG_PREGIUS_S;
-        ctrl->flags                    |= FLAG_INCREASE_FRAME_RATE;
-        ctrl->flags                    |= FLAG_TRIGGER_EXTERNAL;
-        ctrl->flags                    |= FLAG_IO_ENABLED;
-        ctrl->flags                    |= FLAG_TRIGGER_PULSEWIDTH;
-        ctrl->flags                    |= FLAG_TRIGGER_SELF;
-        ctrl->flags                    |= FLAG_TRIGGER_SINGLE;
         ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
+        ctrl->flags                    |= FLAG_INCREASE_FRAME_RATE;
+        ctrl->flags                    |= FLAG_IO_ENABLED;
+        ctrl->flags                    |= FLAG_TRIGGER_EXTERNAL | FLAG_TRIGGER_PULSEWIDTH | 
+                                          FLAG_TRIGGER_SELF | FLAG_TRIGGER_SINGLE;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -674,7 +701,7 @@ static void vc_init_ctrl_imx566(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX566")
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x35b4, .m = 0x35b5 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x30d4, .m = 0x30d5, .h = 0x30d6, .u = 0x0000 };
@@ -685,7 +712,7 @@ static void vc_init_ctrl_imx566(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         FRAME(0, 0, 2848, 2848)
 
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     752,   24, 0xffffff, 0xb98,  255,   15,   1612278)
         MODE( 1, 2, FORMAT_RAW10, 0,     930,   20, 0xffffff, 0xb92, 1023,   60,   1991196)
@@ -694,7 +721,7 @@ static void vc_init_ctrl_imx566(struct vc_ctrl *ctrl, struct vc_desc* desc)
         MODE( 4, 4, FORMAT_RAW10, 0,     485,   34, 0xffffff, 0xba6, 1023,   60,   1043334)
         MODE( 5, 4, FORMAT_RAW12, 0,     574,   30, 0xffffff, 0xba0, 4095,  240,   1233144)
 
-        //binning
+        // Binning
         MODE( 6, 2, FORMAT_RAW08, 1,     396,   40, 0xffffff, 0x604,  255,   15,    430812)
         MODE( 7, 2, FORMAT_RAW10, 1,     485,   36, 0xffffff, 0x5fc, 1023,   60,    524826)
         MODE( 8, 2, FORMAT_RAW12, 1,     575,   32, 0xffffff, 0x5f4, 4095,  240,    620568)
@@ -702,7 +729,7 @@ static void vc_init_ctrl_imx566(struct vc_ctrl *ctrl, struct vc_desc* desc)
         MODE(10, 4, FORMAT_RAW10, 1,     262,   60, 0xffffff, 0x620, 1023,   60,    288846)
         MODE(11, 4, FORMAT_RAW12, 1,     307,   52, 0xffffff, 0x614, 4095,  240,    336690)
 
-        // special registers for binning mode
+        // Special registers for binning mode
         BINNING_MODE_REGS(  6, { IMX56X_GMRWT, 0x08 }, { IMX56X_GMTWT, 0x24 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x10 } );
         BINNING_MODE_REGS(  7, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x20 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x10 } );
         BINNING_MODE_REGS(  8, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x1c }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x0c } );
@@ -724,11 +751,11 @@ static void vc_init_ctrl_imx566(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         ctrl->flags                     = FLAG_EXPOSURE_SONY;
         ctrl->flags                    |= FLAG_PREGIUS_S;
+        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
         ctrl->flags                    |= FLAG_INCREASE_FRAME_RATE;
         ctrl->flags                    |= FLAG_IO_ENABLED;
         ctrl->flags                    |= FLAG_TRIGGER_EXTERNAL | FLAG_TRIGGER_PULSEWIDTH |
                                           FLAG_TRIGGER_SELF | FLAG_TRIGGER_SINGLE;
-        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -739,7 +766,7 @@ static void vc_init_ctrl_imx567(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX567")
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x35b4, .m = 0x35b5 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x30d4, .m = 0x30d5, .h = 0x30d6, .u = 0x0000 };
@@ -750,7 +777,7 @@ static void vc_init_ctrl_imx567(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         FRAME(0, 0, 2464, 2064)
 
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     656,   26, 0xffffff, 0x88a,  255,   15,   1058562)
         MODE( 1, 2, FORMAT_RAW10, 0,     810,   22, 0xffffff, 0x884, 1023,   60,   1273590)
@@ -759,7 +786,7 @@ static void vc_init_ctrl_imx567(struct vc_ctrl *ctrl, struct vc_desc* desc)
         MODE( 4, 4, FORMAT_RAW10, 0,     425,   38, 0xffffff, 0x89e, 1023,   60,    673812)
         MODE( 5, 4, FORMAT_RAW12, 0,     502,   34, 0xffffff, 0x896, 4095,  240,    793692)
 
-        //binning
+        // Binning
         MODE( 6, 2, FORMAT_RAW08, 1,     348,   48, 0xffffff, 0x488,  255,   15,    285444)
         MODE( 7, 2, FORMAT_RAW10, 1,     425,   40, 0xffffff, 0x47c, 1023,   60,    346140)
         MODE( 8, 2, FORMAT_RAW12, 1,     503,   36, 0xffffff, 0x474, 4095,  240,    406782)
@@ -767,7 +794,7 @@ static void vc_init_ctrl_imx567(struct vc_ctrl *ctrl, struct vc_desc* desc)
         MODE(10, 4, FORMAT_RAW10, 1,     232,   68, 0xffffff, 0x4a8, 1023,   60,    194346)
         MODE(11, 4, FORMAT_RAW12, 1,     271,   60, 0xffffff, 0x498, 4095,  240,    224640)
 
-        // special registers for binning mode
+        // Special registers for binning mode
         BINNING_MODE_REGS(  6, { IMX56X_GMRWT, 0x08 }, { IMX56X_GMTWT, 0x2c }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x14 } );
         BINNING_MODE_REGS(  7, { IMX56X_GMRWT, 0x08 }, { IMX56X_GMTWT, 0x24 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x10 } );
         BINNING_MODE_REGS(  8, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x20 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x10 } );
@@ -789,22 +816,27 @@ static void vc_init_ctrl_imx567(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         ctrl->flags                     = FLAG_EXPOSURE_SONY;
         ctrl->flags                    |= FLAG_PREGIUS_S;
+        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
         ctrl->flags                    |= FLAG_INCREASE_FRAME_RATE;
         ctrl->flags                    |= FLAG_IO_ENABLED;
         ctrl->flags                    |= FLAG_TRIGGER_EXTERNAL | FLAG_TRIGGER_PULSEWIDTH |
                                           FLAG_TRIGGER_SELF | FLAG_TRIGGER_SINGLE;
-        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
 }
 
 // ------------------------------------------------------------------------------------------------
 //  Settings for IMX568 (Rev.04)
 //  5.1 MegaPixel Pregius S
+//
+// NOTES:
+// - Changed hmax from 348 to 370 for 4 lanes and RAW08.
+//   This reduces frame rate from 97.1 to 90.6 fps.
+//   Currently this is tested and necessary for i.MX8M Plus.
 
 static void vc_init_ctrl_imx568(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX568")
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x35b4, .m = 0x35b5 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x30d4, .m = 0x30d5, .h = 0x30d6, .u = 0x0000 };
@@ -814,16 +846,16 @@ static void vc_init_ctrl_imx568(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->csr.sen.mode_operating    = 0x00;
 
         FRAME(0, 0, 2464, 2064)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     656,   26, 0xffffff, 0x88a,  255,   15,   1058562)
         MODE( 1, 2, FORMAT_RAW10, 0,     810,   22, 0xffffff, 0x884, 1023,   60,   1273590)
         MODE( 2, 2, FORMAT_RAW12, 0,     965,   20, 0xffffff, 0x880, 4095,  240,   1514484)
-        MODE( 3, 4, FORMAT_RAW08, 0,     348,   46, 0xffffff, 0x8a8,  255,   15,    553716)
+        MODE( 3, 4, FORMAT_RAW08, 0,     370,   46, 0xffffff, 0x8a8,  255,   15,    553716)
         MODE( 4, 4, FORMAT_RAW10, 0,     425,   38, 0xffffff, 0x89e, 1023,   60,    673812)
         MODE( 5, 4, FORMAT_RAW12, 0,     502,   34, 0xffffff, 0x896, 4095,  240,    793692)
 
-        //binning
+        // Binning
         MODE( 6, 2, FORMAT_RAW08, 1,     348,   48, 0xffffff, 0x488,  255,   15,    285444)
         MODE( 7, 2, FORMAT_RAW10, 1,     425,   40, 0xffffff, 0x47c, 1023,   60,    346140)
         MODE( 8, 2, FORMAT_RAW12, 1,     503,   36, 0xffffff, 0x474, 4095,  240,    406782)
@@ -831,7 +863,7 @@ static void vc_init_ctrl_imx568(struct vc_ctrl *ctrl, struct vc_desc* desc)
         MODE(10, 4, FORMAT_RAW10, 1,     232,   68, 0xffffff, 0x4a8, 1023,   60,    194346)
         MODE(11, 4, FORMAT_RAW12, 1,     271,   60, 0xffffff, 0x498, 4095,  240,    224640)
 
-        // special registers for binning mode
+        // Special registers for binning mode
         BINNING_MODE_REGS(  6, { IMX56X_GMRWT, 0x08 }, { IMX56X_GMTWT, 0x2c }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x14 } );
         BINNING_MODE_REGS(  7, { IMX56X_GMRWT, 0x08 }, { IMX56X_GMTWT, 0x24 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x10 } );
         BINNING_MODE_REGS(  8, { IMX56X_GMRWT, 0x04 }, { IMX56X_GMTWT, 0x20 }, { IMX56X_GAINDLY, 0x04 }, { IMX56X_GSDLY, 0x10 } );
@@ -853,22 +885,22 @@ static void vc_init_ctrl_imx568(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         ctrl->flags                     = FLAG_EXPOSURE_SONY;
         ctrl->flags                    |= FLAG_PREGIUS_S;
+        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
         ctrl->flags                    |= FLAG_INCREASE_FRAME_RATE;
         ctrl->flags                    |= FLAG_IO_ENABLED;
         ctrl->flags                    |= FLAG_TRIGGER_EXTERNAL | FLAG_TRIGGER_PULSEWIDTH |
                                           FLAG_TRIGGER_SELF | FLAG_TRIGGER_SINGLE;
-        ctrl->flags                    |= FLAG_USE_BINNING_INDEX;
 }
 
 // ------------------------------------------------------------------------------------------------
-//  Settings for IMX900 (Rev.00)
+//  Settings for IMX900 (Rev.02)
 //  3.2 MegaPixel Pregius S
 
 static void vc_init_ctrl_imx900(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
         INIT_MESSAGE("IMX900")
 
-        ctrl->gain                      = (vc_control) { .min =   0, .max =       480, .def =      0 };
+        AGAIN_LIN(480, 48000)
 
         ctrl->csr.sen.blacklevel        = (vc_csr2) { .l = 0x35b4, .m = 0x35b5 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x30d4, .m = 0x30d5, .h = 0x30d6, .u = 0x0000 };
@@ -878,10 +910,8 @@ static void vc_init_ctrl_imx900(struct vc_ctrl *ctrl, struct vc_desc* desc)
 
         FRAME(0, 0, 2048, 1536)
 
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
-
-        // Values set due to rev2
         MODE( 0, 2, FORMAT_RAW08, 0,     460,   99, 0xffffff, 1816,   255,  15,    563060)
         MODE( 1, 2, FORMAT_RAW10, 0,     564,   99, 0xffffff, 1816,  1023,  60,    688284)
         MODE( 2, 2, FORMAT_RAW12, 0,     667,   99, 0xffffff, 1816,  4095, 240,    795528)
@@ -915,7 +945,7 @@ static void vc_init_ctrl_ov7251(struct vc_ctrl *ctrl, struct vc_desc* desc)
         INIT_MESSAGE("OV7251")
 
         ctrl->exposure                  = (vc_control) { .min =   1, .max =   1000000, .def =  10000 };
-        ctrl->gain                      = (vc_control) { .min =   0, .max =      1023, .def =      0 };
+        AGAIN_FRA(255, 12000)
 
         ctrl->csr.sen.h_end             = (vc_csr2) { .l = 0x0000, .m = 0x0000 };
         ctrl->csr.sen.v_end             = (vc_csr2) { .l = 0x0000, .m = 0x0000 };
@@ -923,10 +953,10 @@ static void vc_init_ctrl_ov7251(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->csr.sen.flash_offset      = (vc_csr4) { .l = 0x3b8b, .m = 0x3b8a, .h = 0x3b89, .u = 0x3b88 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x380f, .m = 0x380e, .h = 0x0000, .u = 0x0000 };
         // NOTE: Modules rom table contains swapped address assigment.
-        ctrl->csr.sen.gain              = (vc_csr2) { .l = 0x350b, .m = 0x350a };
+        ctrl->csr.sen.again             = (vc_csr2) { .l = 0x350b, .m = 0x350a };
         
         FRAME(0, 0, 640, 480)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 1, FORMAT_RAW08, 0,     772,    0,   0xffff,   598,    0,    0,         0)
         MODE( 1, 1, FORMAT_RAW10, 0,     772,    0,   0xffff,   598,    0,    0,         0)
@@ -947,7 +977,7 @@ static void vc_init_ctrl_ov9281(struct vc_ctrl *ctrl, struct vc_desc* desc)
         INIT_MESSAGE("OV9281")
         
         ctrl->exposure                  = (vc_control) { .min = 146, .max =    595000, .def =  10000 };
-        ctrl->gain                      = (vc_control) { .min =  16, .max =       255, .def =     16 };
+        AGAIN_FRA(255, 12000)
 
         ctrl->csr.sen.h_end             = (vc_csr2) { .l = 0x0000, .m = 0x0000 };
         ctrl->csr.sen.v_end             = (vc_csr2) { .l = 0x0000, .m = 0x0000 };
@@ -955,10 +985,10 @@ static void vc_init_ctrl_ov9281(struct vc_ctrl *ctrl, struct vc_desc* desc)
         ctrl->csr.sen.flash_offset      = (vc_csr4) { .l = 0x3924, .m = 0x3923, .h = 0x3922, .u = 0x0000 };
         ctrl->csr.sen.vmax              = (vc_csr4) { .l = 0x380f, .m = 0x380e, .h = 0x0000, .u = 0x0000 };
         // NOTE: Modules rom table contains swapped address assigment.
-        ctrl->csr.sen.gain              = (vc_csr2) { .l = 0x3509, .m = 0x0000 };
+        ctrl->csr.sen.again             = (vc_csr2) { .l = 0x3509, .m = 0x0000 };
         
         FRAME(0, 0, 1280, 800)
-        //all read out         binning  hmax  vmax      vmax   vmax  blkl  blkl  retrigger
+        // All read out      binning    hmax  vmax      vmax   vmax  blkl  blkl  retrigger
         //                      mode           min       max    def   max   def
         MODE( 0, 2, FORMAT_RAW08, 0,     227,   16,   0xffff,   910,    0,    0,         0)
         MODE( 1, 2, FORMAT_RAW10, 0,     227,   16,   0xffff,   910,    0,    0,         0)
@@ -1013,4 +1043,3 @@ int vc_mod_ctrl_init(struct vc_ctrl* ctrl, struct vc_desc* desc)
 
         return 0;
 }
-EXPORT_SYMBOL(vc_mod_ctrl_init);
