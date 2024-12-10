@@ -7,7 +7,7 @@ sudo apt install ./vc-mipi-driver-bcm2712_0.3.1_arm64.deb
 <b>or</b>
 Run the installation with manual packages
 ```
-sudo apt install dkms, linux-headers-generic, v4l-utils, whiptail
+sudo apt install dkms, linux-headers-generic, v4l-utils, whiptail 
 sudo dpkg -i ./vc-mipi-driver-bcm2712_0.3.1_arm64.deb
 ```
 After a reboot the connected sensor(s) should be detected and visible as v4l2 capture devices
@@ -24,6 +24,11 @@ the sensors are:
 
 Running dpkg-buildpackage by script creates debian package
 
+## Requirements
+```
+sudo apt-get install debhelper-compat  dkms dh-dkms debhelper  linux-headers-generic
+```
+## Script
 ```
 bash createDebianPackage.sh
 ```
