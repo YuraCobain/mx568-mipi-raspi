@@ -7,7 +7,8 @@
 #include <linux/i2c.h>
 #include <linux/videodev2.h>
 
-extern int debug;
+// extern int debug;
+int debug = 3; // FS Workaround
 #define level(level) if (debug >= level)
 #define vc_reg(dev, fmt, ...) level(6) dev_info(dev, fmt, ##__VA_ARGS__)
 #define vc_dbg(dev, fmt, ...) level(5) dev_info(dev, fmt, ##__VA_ARGS__)

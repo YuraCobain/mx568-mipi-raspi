@@ -50,7 +50,7 @@
 
 int vc_mod_is_color_sensor(struct vc_desc *desc)
 {
-        if (desc->sen_type) {
+        if (desc->sen_type[0] != 0) {
                 __u32 len = strnlen(desc->sen_type, 16);
                 if (len > 0 && len < 17) {
                         return *(desc->sen_type + len - 1) == 'C';
@@ -58,6 +58,7 @@ int vc_mod_is_color_sensor(struct vc_desc *desc)
         }
         return 0;
 }
+EXPORT_SYMBOL(vc_mod_is_color_sensor);
 
 static void vc_init_ctrl(struct vc_ctrl *ctrl, struct vc_desc* desc)
 {
@@ -1043,3 +1044,4 @@ int vc_mod_ctrl_init(struct vc_ctrl* ctrl, struct vc_desc* desc)
 
         return 0;
 }
+EXPORT_SYMBOL(vc_mod_ctrl_init);
