@@ -29,7 +29,7 @@ map_mediabus_to_fourcc() {
             mediabusfmt="pRAA" #MEDIA_BUS_FMT_SRGGB10_1X10
             ;;
         "0x200a")
-            mediabusfmt="Y10P" #MEDIA_BUS_FMT_Y10_1X10
+            mediabusfmt="Y10 " #MEDIA_BUS_FMT_Y10_1X10
             ;;
         "0x300a")
             mediabusfmt="pgAA" #MEDIA_BUS_FMT_SGRBG10_1X10
@@ -200,6 +200,65 @@ set_roi() {
         fi
     done
 }
+set_format() {
+
+    local videodev=$1
+    local mediabusfmt=$2
+        
+    for mediadev in /dev/media*; do
+        echo "Checking $mediadev..."
+        
+        # Skip if not a valid media device
+        if ! [ -e "$mediadev" ]; then
+            continue
+        fi
+        
+        # Get media device number
+        media_num=$(echo "$mediadev" | grep -o '[0-9]*$')
+        
+        # Check if this media device has video0
+        if media-ctl -d "$mediadev" -p | grep -q "$videodev"; then
+            echo "Found $videodev on $mediadev"
+            
+            # Your existing script logic here
+            subdev=$(media-ctl -d "$mediadev" -p | grep "vc_mipi_camera" -A  2  | grep "device node name" | awk -F ' ' '{ print $4 }')
+
+            media-ctl -d "$mediadev" -r
+
+            mediabus_code=$(get_mediabus_code $subdev )
+
+            # Print the mediabus code
+            echo "Mediabus code of subdevice $subdev: '$mediabus_code'"
+            fmt=$(map_mediabus_to_fourcc $mediabus_code)
+            echo "Format of subdevice $subdev: $fmt"
+
+            entity_name=$(get_entity_name $mediadev)
+            echo "Entity name: $entity_name"
+
+
+
+            resolution=$(v4l2-ctl -d $subdev --get-subdev-fmt | grep Width | awk -F ' ' '{ print $3 }' | tr '/' 'x' | xargs echo -n)
+            width=$(echo $resolution | awk -F 'x' '{ print $1 }')
+            height=$(echo $resolution | awk -F 'x' '{ print $2 }')
+            format="$mediabusfmt/$resolution"
+            #read a
+            #
+            echo "media-ctl -d "$mediadev" -V ''\''csi2'\'':4 [fmt:'"$format"' field:none colorspace:srgb]'" 
+            media-ctl -d "$mediadev" -V ''\''csi2'\'':4 [fmt:'"$format"' field:none colorspace:srgb]' 
+            media-ctl -d "$mediadev" -V ''\''csi2'\'':0 [fmt:'"$format"' field:none colorspace:srgb]' 
+            media-ctl -d "$mediadev" -V ''\''vc_mipi_camera '$entity_name''\'':0 [fmt:'"$format"' field:none colorspace:srgb]' 
+
+            media-ctl -d "$mediadev" -l ''\''csi2'\'':4 -> '\''rp1-cfe-csi2_ch0'\'':0 [1]' 
+            v4l2-ctl -d "$videodev" --set-fmt-video=width=$width,height=$height,pixelformat=$fmt,colorspace=srgb 
+            #read a
+            v4l2-ctl --verbose  --stream-mmap --device=$videodev --stream-count=3
+            s
+                                   
+           
+            return
+        fi
+    done
+}
 
 dialog_set_roi() 
 {
@@ -216,6 +275,57 @@ dialog_set_roi()
     set_roi "$subdev" "$videodev" "$width" "$height"
     
 }
+dialog_set_format() 
+{
+    local videodev=$1
+
+    menu_options_format+=("BA81" "SBGGR8_1X8")
+    menu_options_format+=("GRBG" "SGRBG8_1X8")
+    menu_options_format+=("GBRG" "SGBRG8_1X8")
+    menu_options_format+=("RGGB" "SRGGB8_1X8")
+    menu_options_format+=("GREY" "Y8_1X8")
+    menu_options_format+=("pGAA" "SGBRG10_1X10")
+    menu_options_format+=("pRAA" "SRGGB10_1X10")
+    menu_options_format+=("Y10P" "Y10_1X10")
+    menu_options_format+=("pgAA" "SGRBG10_1X10")
+    menu_options_format+=("pBAA" "SBGGR10_1X10")
+    menu_options_format+=("pBCC" "SBGGR12_1X12")
+    menu_options_format+=("pGCC" "SGBRG12_1X12 ")
+    menu_options_format+=("pgCC" "SGRBG12_1X12")
+    menu_options_format+=("pRCC" "SRGGB12_1X12")
+    menu_options_format+=("Y12P" "Y12_1X12")
+    menu_options_format+=("pBEE" "SBGGR14_1X14")
+    menu_options_format+=("pGEE" "SGBRG14_1X14")
+    menu_options_format+=("pgEE" "SGRBG14_1X14")
+    menu_options_format+=("pREE" "SRGGB14_1X14")
+    menu_options_format+=("Y14P" "Y14_1X14")
+    menu_options_format+=("BYR2" "SBGGR16_1X16")
+    menu_options_format+=("GB16" "SGBRG16_1X16")
+    menu_options_format+=("GR16" "SGRBG16_1X16")
+    menu_options_format+=("RG16" "SRGGB16_1X16")
+    menu_options_format+=("Y16 " "Y16_1X16")
+    menu_options+=("Set ROI" "Set the region of interest")  
+    menu_options+=("Configure Device Tree" "Configure the lanes for the mipi sensors")
+
+   
+
+    # Use whiptail to prompt the user to enter width and height
+    mediabusfmt=$(whiptail --menu "Select the sensor" 25 50 16 "${menu_options_format[@]}" 3>&1 1>&2 2>&3)
+
+    echo "Selected format: $mediabusfmt"
+    set_format "$videodev" "$mediabusfmt"
+    
+}
+
+get_entity_name() {
+    local mediadev=$1
+    local entity_name=$(media-ctl -d "$mediadev" -p | grep "vc_mipi_camera" | awk -F 'vc_mipi_camera' '{print $2}' | awk '{print $1}' | tail -n +2 |head -n 1)
+    if [ -z "$entity_name" ]; then
+        echo "Error: vc_mipi_camera not found in $mediadev" >&2
+        exit 1
+    fi
+    echo "$entity_name"
+}
 
 configure_subdev_controls() {
     local subdev=$1
@@ -229,6 +339,7 @@ configure_subdev_controls() {
         menu_options=()
         menu_options+=("Set ROI" "Set the region of interest")
         menu_options+=("Configure Device Tree" "Configure the lanes for the mipi sensors")
+        menu_options+=("Format" "Set the format of the camera")
         for control in $controls; do
             if ! v4l2-ctl --device=$subdev --get-ctrl=$control;then
                 continue
@@ -252,6 +363,10 @@ configure_subdev_controls() {
         fi
         if([ "$selected_control" == "Configure Device Tree" ]); then
             configure_device_tree
+            continue
+        fi
+        if([ "$selected_control" == "Format" ]); then
+            dialog_set_format "$videodev"
             continue
         fi
 
