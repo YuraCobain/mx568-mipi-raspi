@@ -14,7 +14,7 @@ jobs:
 
     - name: Setup system
       run: |
-        sudo apt-get update && apt-get install --no-install-recommends -y \
+        sudo apt-get update && sudo apt-get install --no-install-recommends -y \
         build-essential \
         debhelper-compat dh-dkms debhelper linux-headers-generic \
         device-tree-compiler \
