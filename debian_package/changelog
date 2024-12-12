@@ -1,4 +1,4 @@
-vc-mipi-driver-bcm2712 (0.3.1) unstable; urgency=medium
+vc-mipi-driver-bcm2712 (${VERSION}) unstable; urgency=medium
 
   * Initial release
 

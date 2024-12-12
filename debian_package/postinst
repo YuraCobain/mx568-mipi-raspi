@@ -7,7 +7,7 @@
 set -e
 TEST=0
 NAME="vc-mipi-driver-bcm2712"
-VERSION="0.3.1"
+VERSION="${VERSION}"
 PACKAGE_NAME=$NAME
 DEB_NAME=$(echo $PACKAGE_NAME | sed 's,_,-,')
 CVERSION=`dpkg-query -W -f='${Version}' $DEB_NAME | awk -F "-" '{print $1}' | cut -d\: -f2`
@@ -43,9 +43,9 @@ add_config ()
         echo "Copying config file config_vc-mipi-driver-bcm2712.txt"
         cp -f /usr/share/vc-mipi-driver-bcm2712-dkms/overlays/config_vc-mipi-driver-bcm2712.txt /boot/firmware/ || true
     fi
-    if [ -d /usr/src/vc-mipi-driver-bcm2712-0.3.1/overlays ]; then
+    if [ -d /usr/src/vc-mipi-driver-bcm2712-${VERSION}/overlays ]; then
         echo "Copying overlay files"
-        cp -rf /usr/src/vc-mipi-driver-bcm2712-0.3.1/overlays /boot/firmware/ || true
+        cp -rf /usr/src/vc-mipi-driver-bcm2712-${VERSION}/overlays /boot/firmware/ || true
     fi
         if [ -f /usr/share/vc-mipi-driver-bcm2712-dkms/99-camera-setup.rules ]; then
         echo "Copying udev rule"

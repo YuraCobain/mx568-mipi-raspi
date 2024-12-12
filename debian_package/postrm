@@ -3,7 +3,7 @@
 set -e
 
 PACKAGE_NAME="vc-mipi-driver-bcm2712"
-PACKAGE_VERSION="0.3.1"
+PACKAGE_VERSION="${VERSION}"
 
 case "$1" in
     remove|upgrade|deconfigure)
