@@ -14,13 +14,12 @@ jobs:
 
     - name: Setup system
       run: |
-        apt-get update && apt-get install --no-install-recommends -y \
+        sudo apt-get update && apt-get install --no-install-recommends -y \
         build-essential \
         debhelper-compat dh-dkms debhelper linux-headers-generic \
         device-tree-compiler \
         dpkg-dev \
-        sudo \
-        && rm -rf /var/lib/apt/lists/*
+        && sudo rm -rf /var/lib/apt/lists/*
 
 
     - name: Build Debian Package
