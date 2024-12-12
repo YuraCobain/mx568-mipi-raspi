@@ -6,7 +6,8 @@ mkdir -p build
 if [ -z "$VERSION" ]; then
     export VERSION="0.0.0"
 fi
-
+# Delete v from version
+export VERSION=$(echo $VERSION | sed 's/v//')
 
 
 cp -r debian_package build/debian
