@@ -18,10 +18,6 @@ SENSOR_NAMES += vc-mipi-common-memory-contiguous
 
 ################################################################################
 
-KERNEL_VER		  = $(shell uname -r)
-KERNEL_MODULE_DIR	= /lib/modules/$(KERNEL_VER)
-KERNEL_BUILD_DIR	= $(KERNEL_MODULE_DIR)/build
-KERNEL_I2C_DIR	  = $(KERNEL_MODULE_DIR)/kernel/drivers/media/i2c
 UBUNTU_CONFIG		= /boot/firmware/config.txt
 UBUNTU_LAYOUT		= $(shell [ -f $(UBUNTU_CONFIG) ] && echo 1 || echo 0 )
 ifeq ($(UBUNTU_LAYOUT), 1)
@@ -60,13 +56,13 @@ overlays/%.dtbo: overlays/%.dts
 overlays/vc-mipi-bcm2712-cam0.dtbo: overlays/vc-mipi-bcm2712-cam0-overlay.dts
 	dtc -W no-unit_address_vs_reg -@ -I dts -O dtb  -o $@  $<
 
-build: $(KERNEL_BUILD_DIR)
-	$(MAKE) -C $(KERNEL_BUILD_DIR) M=$(PWD) modules
-all: $(KERNEL_BUILD_DIR) $(DEVICETREES) build
-	
+build:
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+all: $(DEVICETREES) build
 
 clean:
-	-make -C $(KERNEL_BUILD_DIR)  M=$(PWD)  clean
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	-rm -f $(SENSORDRIVERS)
 	-rm -f $(DEVICETREES)
 
@@ -91,7 +87,7 @@ unload:
 dev:	clean all install reload
 
 install: all
-	sudo install -p -m 644  $(SENSORDRIVERS)	$(KERNEL_I2C_DIR)/
+	sudo install -p -m 644  $(SENSORDRIVERS)	/lib/modules/$(shell uname -r)/kernel/drivers/media/i2c/
 	sudo install -p -m 644  $(DEVICETREES)	 $(BOOT_OVERLAYS_DIR)/
 	sudo /sbin/depmod -a $(shell uname -r)
 	@echo "--------------------------------------"
