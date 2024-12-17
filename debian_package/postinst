@@ -7,16 +7,19 @@
 set -e
 TEST=0
 NAME="vc-mipi-driver-bcm2712"
-VERSION="${VERSION}"
+VERSION="$VERSION_DEB_PACKAGE"
 PACKAGE_NAME=$NAME
 DEB_NAME=$(echo $PACKAGE_NAME | sed 's,_,-,')
-CVERSION=`dpkg-query -W -f='${Version}' $DEB_NAME | awk -F "-" '{print $1}' | cut -d\: -f2`
+CVERSION=`dpkg-query -W -f='${VERSION}' $DEB_NAME | awk -F "-" '{print $1}' | cut -d\: -f2`
 ARCH=`dpkg --print-architecture`
 
 dkms_configure () {
-    for POSTINST in /usr/lib/dkms/common.postinst "/usr/share/$PACKAGE_NAME/postinst"; do
+    echo "DEBUG: NAME is $NAME"
+
+    for POSTINST in /usr/lib/dkms/common.postinst "/usr/share/$PACKAGE_NAME/debian/postinst"; do
         if [ -f "$POSTINST" ]; then
-            "$POSTINST" "$NAME" "$VERSION" "/usr/share/$PACKAGE_NAME" "$ARCH" "$2"
+            echo "Running $POSTINST ${NAME} ${VERSION} /usr/share/$PACKAGE_NAME $ARCH $2"
+            "$POSTINST" "${NAME}" "${VERSION}" "/usr/share/$PACKAGE_NAME" "$ARCH" "$2"
             return $?
         fi
         echo "WARNING: $POSTINST does not exist." >&2
@@ -63,13 +66,11 @@ add_config ()
     if ! grep -q "include config_vc-mipi-driver-bcm2712.txt" "$CONFIG_FILE"; then
         echo "include config_vc-mipi-driver-bcm2712.txt" >> "$CONFIG_FILE"
     fi
-
-    
 }
 
 case "$1" in
     configure)
-        dkms_configure
+        dkms_configure configure
         add_config
     ;;
 
@@ -81,9 +82,6 @@ case "$1" in
         exit 1
     ;;
 esac
-
-
-
 
 udevadm control --reload-rules
 udevadm trigger
