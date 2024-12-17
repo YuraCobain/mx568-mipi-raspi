@@ -131,6 +131,15 @@ configure_device_tree() {
         sleep 2
     fi
 }
+get_format_entity()
+{
+    local subdev=$1
+    local entity_name=$(media-ctl -d "$mediadev" -p | grep -B 3 "$subdev" | grep entity | awk -F ': ' '{ print $2 }' | awk -F ' ' '{ print $1, $2 }')
+
+    format=$(media-ctl -d "$mediadev" -p | grep -A 2 "$subdev" | grep fmt: | awk -F ':' '{ print $2 }' | awk -F ' ' '{print $1}')
+
+    echo "$format"
+}
 set_roi() {
 
     local subdev=$1
@@ -193,7 +202,7 @@ set_roi() {
                 whiptail --infobox "Successfully set ROI to $width x $height" 8 40 --title "Success"
                 sleep 1
             else
-                whiptail --infobox "Failed to set ROI to $width x $height" 8 40 --ok-button "OK" --title "Error"  --colors --msgbox "\Zb\Z1Failed to set ROI to $width x $height\Zn" 8 40
+                whiptail --infobox "Failed to set ROI to $width x $height" 8 40 --ok-button "OK" --title "Error"
                 sleep 1
             fi
             return
@@ -225,11 +234,9 @@ set_format() {
 
             media-ctl -d "$mediadev" -r
 
-            mediabus_code=$(get_mediabus_code $subdev )
 
             # Print the mediabus code
             echo "Mediabus code of subdevice $subdev: '$mediabus_code'"
-            fmt=$(map_mediabus_to_fourcc $mediabus_code)
             echo "Format of subdevice $subdev: $fmt"
 
             entity_name=$(get_entity_name $mediadev)
@@ -244,15 +251,35 @@ set_format() {
             #read a
             #
             echo "media-ctl -d "$mediadev" -V ''\''csi2'\'':4 [fmt:'"$format"' field:none colorspace:srgb]'" 
-            media-ctl -d "$mediadev" -V ''\''csi2'\'':4 [fmt:'"$format"' field:none colorspace:srgb]' 
+            media-ctl -d "$mediadev" -r
+            media-ctl -d "$mediadev" -V ''\''vc_mipi_camera '$entity_name''\'':0 [fmt:'"$format"' field:none colorspace:srgb]'
+
+            new_format=$(get_format_entity $subdev)
+            echo "New format: '$new_format'"
+            if([ "$new_format" != "$format" ]); then
+                echo "Failed to set format to $mediabusfmt"
+                whiptail --msgbox "Failed to set format to $mediabusfmt Format is probably not supported by sensor" 8 40 --ok-button "OK" --title "Error" 
+                sleep 1
+                media-ctl -d "$mediadev" -V ''\''csi2'\'':0 [fmt:'"$new_format"' field:none colorspace:srgb]' 
+                media-ctl -d "$mediadev" -V ''\''csi2'\'':4 [fmt:'"$new_format"' field:none colorspace:srgb]' 
+                media-ctl -d "$mediadev" -l ''\''csi2'\'':4 -> '\''rp1-cfe-csi2_ch0'\'':0 [1]' 
+                return
+            fi
+
             media-ctl -d "$mediadev" -V ''\''csi2'\'':0 [fmt:'"$format"' field:none colorspace:srgb]' 
-            media-ctl -d "$mediadev" -V ''\''vc_mipi_camera '$entity_name''\'':0 [fmt:'"$format"' field:none colorspace:srgb]' 
+            media-ctl -d "$mediadev" -V ''\''csi2'\'':4 [fmt:'"$format"' field:none colorspace:srgb]' 
+
 
             media-ctl -d "$mediadev" -l ''\''csi2'\'':4 -> '\''rp1-cfe-csi2_ch0'\'':0 [1]' 
-            v4l2-ctl -d "$videodev" --set-fmt-video=width=$width,height=$height,pixelformat=$fmt,colorspace=srgb 
             #read a
+            mediabus_code=$(get_mediabus_code $subdev )
+            fmt=$(map_mediabus_to_fourcc $mediabus_code)
+
+            v4l2-ctl -d "$videodev" --set-fmt-video=width=$width,height=$height,pixelformat=$fmt,colorspace=srgb 
+
             v4l2-ctl --verbose  --stream-mmap --device=$videodev --stream-count=3
-            s
+            sleep 2
+            
                                    
            
             return
@@ -277,45 +304,78 @@ dialog_set_roi()
 }
 dialog_set_format() 
 {
-    local videodev=$1
+       local videodev=$1
 
-    menu_options_format+=("BA81" "SBGGR8_1X8")
-    menu_options_format+=("GRBG" "SGRBG8_1X8")
-    menu_options_format+=("GBRG" "SGBRG8_1X8")
-    menu_options_format+=("RGGB" "SRGGB8_1X8")
-    menu_options_format+=("GREY" "Y8_1X8")
-    menu_options_format+=("pGAA" "SGBRG10_1X10")
-    menu_options_format+=("pRAA" "SRGGB10_1X10")
-    menu_options_format+=("Y10P" "Y10_1X10")
-    menu_options_format+=("pgAA" "SGRBG10_1X10")
-    menu_options_format+=("pBAA" "SBGGR10_1X10")
-    menu_options_format+=("pBCC" "SBGGR12_1X12")
-    menu_options_format+=("pGCC" "SGBRG12_1X12 ")
-    menu_options_format+=("pgCC" "SGRBG12_1X12")
-    menu_options_format+=("pRCC" "SRGGB12_1X12")
-    menu_options_format+=("Y12P" "Y12_1X12")
-    menu_options_format+=("pBEE" "SBGGR14_1X14")
-    menu_options_format+=("pGEE" "SGBRG14_1X14")
-    menu_options_format+=("pgEE" "SGRBG14_1X14")
-    menu_options_format+=("pREE" "SRGGB14_1X14")
-    menu_options_format+=("Y14P" "Y14_1X14")
-    menu_options_format+=("BYR2" "SBGGR16_1X16")
-    menu_options_format+=("GB16" "SGBRG16_1X16")
-    menu_options_format+=("GR16" "SGRBG16_1X16")
-    menu_options_format+=("RG16" "SRGGB16_1X16")
-    menu_options_format+=("Y16 " "Y16_1X16")
-    menu_options+=("Set ROI" "Set the region of interest")  
-    menu_options+=("Configure Device Tree" "Configure the lanes for the mipi sensors")
+    declare -A format_map
+    format_map=(
+        ["BGGR8"]="SBGGR8_1X8"
+        ["GRBG8"]="SGRBG8_1X8"
+        ["GBRG8"]="SGBRG8_1X8"
+        ["RGGB8"]="SRGGB8_1X8"
+        ["Y8"]="Y8_1X8"
+        ["GBRG10"]="SGBRG10_1X10"
+        ["RGGB10"]="SRGGB10_1X10"
+        ["Y10"]="Y10_1X10"
+        ["GRBG10"]="SGRBG10_1X10"
+        ["BGGR10"]="SBGGR10_1X10"
+        ["BGGR12"]="SBGGR12_1X12"
+        ["GBRG12"]="SGBRG12_1X12"
+        ["GRBG12"]="SGRBG12_1X12"
+        ["RGGB12"]="SRGGB12_1X12"
+        ["Y12"]="Y12_1X12"
+        ["BGGR14"]="SBGGR14_1X14"
+        ["GBRG14"]="SGBRG14_1X14"
+        ["GRBG14"]="SGRBG14_1X14"
+        ["RGGB14"]="SRGGB14_1X14"
+        ["Y14"]="Y14_1X14"
+        ["BGGR16"]="SBGGR16_1X16"
+        ["GB16"]="SGBRG16_1X16"
+        ["GR16"]="SGRBG16_1X16"
+        ["RG16"]="SRGGB16_1X16"
+        ["Y16"]="Y16_1X16"
+    )
 
-   
+    menu_options_format=(
+        "Y8" "Greyscale 8-bit"
+        "Y10" "Greyscale 10-bit"
+        "Y12" "Greyscale 12-bit"
+        "Y14" "Bayer Y14 14-bit"
+        "Y16" "Greyscale 16-bit"
+        "BGGR8" "Bayer BGGR 8-bit"
+        "GRBG8" "Bayer GRBG 8-bit"
+        "GBRG8" "Bayer GBRG 8-bit"
+        "RGGB8" "Bayer RGGB 8-bit"
+        "GBRG10" "Bayer GBRG 10-bit"
+        "RGGB10" "Bayer RGGB 10-bit"
+        "GRBG10" "Bayer GRBG 10-bit"
+        "BGGR10" "Bayer BGGR 10-bit"
+        "BGGR12" "Bayer BGGR 12-bit"
+        "GBRG12" "Bayer GBRG 12-bit"
+        "GRBG12" "Bayer GRBG 12-bit"
+        "RGGB12" "Bayer RGGB 12-bit"
+        "BGGR14" "Bayer BGGR 14-bit"
+        "GBRG14" "Bayer GBRG 14-bit"
+        "GRBG14" "Bayer GRBG 14-bit"
+        "RGGB14" "Bayer RGGB 14-bit"   
+        "BGGR16" "Bayer BGGR 16-bit"
+        "GB16" "Bayer GBRG 16-bit"
+        "GR16" "Bayer GRBG 16-bit"
+        "RG16" "Bayer RGGB 16-bit"
+    )
 
-    # Use whiptail to prompt the user to enter width and height
-    mediabusfmt=$(whiptail --menu "Select the sensor" 25 50 16 "${menu_options_format[@]}" 3>&1 1>&2 2>&3)
+    # Use whiptail to prompt the user to select the format
+    mediabusfmt=$(whiptail --menu "Select the sensor format" 25 50 16 "${menu_options_format[@]}" 3>&1 1>&2 2>&3)
 
-    echo "Selected format: $mediabusfmt"
-    set_format "$videodev" "$mediabusfmt"
     
+    if [ $? -ne 0 ]; then
+        return
+    fi
+    # Lookup the full mediabus format code
+    full_mediabusfmt=${format_map[$mediabusfmt]}
+    echo "Selected format: $full_mediabusfmt"
+    set_format "$videodev" "$full_mediabusfmt"
 }
+ 
 
 get_entity_name() {
     local mediadev=$1
@@ -387,7 +447,7 @@ configure_subdev_controls() {
             TERM=ansi whiptail --infobox "Successfully set $selected_control to $new_value" 8 40 --title "Success" 
             sleep 1
         else
-            whiptail --infobox "Failed to set $selected_control to $new_value" 8 40 --ok-button "OK" --title "Error"  --colors --msgbox "\Zb\Z1Failed to set $selected_control to $new_value\Zn" 8 40
+            whiptail --infobox "Failed to set $selected_control to $new_value" 8 40 --ok-button "OK" --title "Error"  
             sleep 1
 
         fi

@@ -41,8 +41,10 @@ The right lanes configuration for the sensors has to be made. For some sensors, 
 If no specific configuration is needed, the "more lanes" configuration is the first choice (i.e. 4 instead 2 lanes)
 2. Additionaly the configuration tool vc-config is installed. By calling ```vc-config```
 Here, there are also the possibilities to change the values of the controls and also the Region of Interests (ROI)
+3. The formats can be adjusted. All formats are displayed, although not all are available which depends on the sensor model
 
 ![Cam Controls](./docs/whiptail_controls.png "Cam Controls")
 ![Cam Selection](./docs/whiptail_cam_selection.png "Cam Selection")
 ![Lanes configuration](./docs/whiptail_lanes_config.png "Lanes configuration")
+![Format Selection](./docs/whiptail_format_settings.png "Format settings")
 
