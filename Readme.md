@@ -1,3 +1,13 @@
+# Raspberry Pi 5 Driver for VC MIPI
+This driver package is supporting the offical Raspberry Pi 5. 
+Downloads are available under 
+
+[Releases](https://github.com/VC-MIPI-modules/vc_mipi_raspi/releases)
+
+For raspberrypi 3 and 4 modules and compute modules, please use this driver installation
+
+[Raspi3 and 4 Driver](https://www.mipi-modules.com/fileadmin/external/documentation/hardware/VC_MIPI_Raspberry_PI/index.html)
+
 # Installation
 The driver is tested on booksworm with 64 bit
 Run installation with the installation of the needed packages 
@@ -48,3 +58,34 @@ Here, there are also the possibilities to change the values of the controls and 
 ![Lanes configuration](./docs/whiptail_lanes_config.png "Lanes configuration")
 ![Format Selection](./docs/whiptail_format_settings.png "Format settings")
 
+
+# Support Tool
+
+The official support tool for the v4l2 driver is 
+[V4L2-Test](https://github.com/pmliquify/v4l2-test/tree/master)
+
+Please refer to the installation there. 
+For starting, you have to add the subdevice properly in order to set the controls by tool
+```bash
+./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat> -p 1 -d <device> -sd <subdevice>
+# Camera 0
+./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat> -p 1 -d /dev/video0 -sd /dev/v4l-subdev2
+# Camera 1
+./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat> -p 1 -d /dev/video8 -sd /dev/v4l-subdev5
+
+```
+# Controls
+1. [Black level](./docs/black_level.md)
+2. [IO Mode](./docs/io_mode.md)
+3. [Trigger mode](./docs/trigger_mode.md)
+4. [Binning mode](./docs/binning_mode.md)
+
+# Known issues
+
+The driver offers the basic features of the VC MIPI sensors. 
+This has the advantage that the same functions are available with all sensors. 
+If special functions are required, please contact the support team or your contact at Vision Components GmbH 
+
+1. The flipping controls are not supported by standard driver
+
+<b>[FAQ](./docs/faq.md)
