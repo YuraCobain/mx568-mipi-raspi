@@ -29,7 +29,7 @@ map_mediabus_to_fourcc() {
             mediabusfmt="pRAA" #MEDIA_BUS_FMT_SRGGB10_1X10
             ;;
         "0x200a")
-            mediabusfmt="Y10 " #MEDIA_BUS_FMT_Y10_1X10
+            mediabusfmt="Y10P" #MEDIA_BUS_FMT_Y10_1X10 On the raspi Y10  is not used, but Y10P
             ;;
         "0x300a")
             mediabusfmt="pgAA" #MEDIA_BUS_FMT_SGRBG10_1X10

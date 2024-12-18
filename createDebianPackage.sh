@@ -3,7 +3,7 @@ mkdir -p build
 
 # Set version if not set
 if [ -z "$VERSION_DEB_PACKAGE" ]; then
-    export VERSION_DEB_PACKAGE="0.2.0"
+    export VERSION_DEB_PACKAGE="0.3.6"
 fi
 # Delete v from version
 export VERSION_DEB_PACKAGE=$(echo $VERSION_DEB_PACKAGE | sed 's/v//')
@@ -15,10 +15,6 @@ mkdir -p build/debian
 cp -r src build/
 
 
-
-
-
-chmod -R 644 build/debian/tmp/boot/firmware/overlays/
 envsubst '$VERSION_DEB_PACKAGE' < debian_package/changelog > build/debian/changelog
 envsubst '$VERSION_DEB_PACKAGE' < dkms.conf > build/dkms.conf
 envsubst '$VERSION_DEB_PACKAGE' < debian_package/control > build/debian/control
