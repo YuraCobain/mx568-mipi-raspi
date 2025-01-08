@@ -9,7 +9,11 @@ For raspberrypi 3 and 4 modules and compute modules, please use this driver inst
 [Raspi3 and 4 Driver](https://www.mipi-modules.com/fileadmin/external/documentation/hardware/VC_MIPI_Raspberry_PI/index.html)
 
 # Installation
-The driver is tested on booksworm with 64 bit
+The driver is tested on booksworm with 64 bit. (Lite or with desktop)
+The OS can be installed by the offical rpi-imager from Raspberrypi Foundation.
+
+[Raspberry Pi OS](https://www.raspberrypi.com/software/)
+
 Run installation with the installation of the needed packages 
 ```
 sudo apt install ./vc-mipi-driver-bcm2712_0.3.1_arm64.deb

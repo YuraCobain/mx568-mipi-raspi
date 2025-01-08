@@ -3,7 +3,7 @@
 ```bash
 v4l2-ctl -c <control>=<value> -d <subdevice>
 #Example for first camera
-v4l2-ctl -c blacklevel=1000 -d /dev/v4l-subdev2
+v4l2-ctl -c black_level=1000 -d /dev/v4l-subdev2
 ```
 
 # Change lanes settings by bash command
