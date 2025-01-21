@@ -348,22 +348,22 @@ struct device *vc_core_get_mod_device(struct vc_cam *cam)
 }
 
 static int vc_core_get_fourcc_fmt(__u32 code, char *buf)
-{
-        switch(code) {
-        case MEDIA_BUS_FMT_Y8_1X8:       sprintf(buf, "GREY"); break;
-        case MEDIA_BUS_FMT_Y10_1X10:     sprintf(buf, "Y10 "); break;
-        case MEDIA_BUS_FMT_Y12_1X12:     sprintf(buf, "Y12 "); break;
-        case MEDIA_BUS_FMT_Y14_1X14:     sprintf(buf, "Y14 "); break;
-        case MEDIA_BUS_FMT_SRGGB8_1X8:   sprintf(buf, "RGGB"); break;
-        case MEDIA_BUS_FMT_SRGGB10_1X10: sprintf(buf, "RG10"); break;
-        case MEDIA_BUS_FMT_SRGGB12_1X12: sprintf(buf, "RG12"); break;
-        case MEDIA_BUS_FMT_SRGGB14_1X14: sprintf(buf, "RG14"); break;
-        case MEDIA_BUS_FMT_SGBRG8_1X8:   sprintf(buf, "GBRG"); break;
-        case MEDIA_BUS_FMT_SGBRG10_1X10: sprintf(buf, "GB10"); break;
-        case MEDIA_BUS_FMT_SGBRG12_1X12: sprintf(buf, "GB12"); break;
-        case MEDIA_BUS_FMT_SGBRG14_1X14: sprintf(buf, "GB14"); break;
-        default: return -EINVAL;
-        }
+        {
+                switch(code) {
+                        case MEDIA_BUS_FMT_Y8_1X8:       sprintf(buf, "GREY"); break;
+                        case MEDIA_BUS_FMT_Y10_1X10:     sprintf(buf, "Y10 "); break;
+                        case MEDIA_BUS_FMT_Y12_1X12:     sprintf(buf, "Y12 "); break;
+                        case MEDIA_BUS_FMT_Y14_1X14:     sprintf(buf, "Y14 "); break;
+                        case MEDIA_BUS_FMT_SRGGB8_1X8:   sprintf(buf, "RGGB"); break;
+                        case MEDIA_BUS_FMT_SRGGB10_1X10: sprintf(buf, "RG10"); break;
+                        case MEDIA_BUS_FMT_SRGGB12_1X12: sprintf(buf, "RG12"); break;
+                        case MEDIA_BUS_FMT_SRGGB14_1X14: sprintf(buf, "RG14"); break;
+                        case MEDIA_BUS_FMT_SGBRG8_1X8:   sprintf(buf, "GBRG"); break;
+                        case MEDIA_BUS_FMT_SGBRG10_1X10: sprintf(buf, "GB10"); break;
+                        case MEDIA_BUS_FMT_SGBRG12_1X12: sprintf(buf, "GB12"); break;
+                        case MEDIA_BUS_FMT_SGBRG14_1X14: sprintf(buf, "GB14"); break;
+                        default: return -EINVAL;
+                }
         return 0;
 }
 
@@ -507,7 +507,7 @@ static __u32 vc_core_get_default_format(struct vc_cam *cam)
         return vc_core_format_to_mbus_code(format, is_color, is_bgrg);
 }
 
-int vc_core_enum_mbus_code(struct vc_cam *cam, __u32 index) 
+void vc_core_update_mbus_codes(struct vc_cam *cam) 
 {
         struct vc_ctrl *ctrl = &cam->ctrl;
         struct vc_desc *desc = &cam->desc;
@@ -516,29 +516,26 @@ int vc_core_enum_mbus_code(struct vc_cam *cam, __u32 index)
         int is_bgrg = ctrl->flags & FLAG_FORMAT_GBRG;
         int modeIx, codeIx;
 
-        if (desc->mbus_codes[0] == 0) {
-                for (modeIx = 0; modeIx < desc->num_modes; modeIx++) {
-                        struct vc_desc_mode *mode = &desc->modes[modeIx];
-                        __u32 code = vc_core_format_to_mbus_code(mode->format, is_color, is_bgrg);
-                        vc_dbg(dev, "%s(): Checking mode %u (code: 0x%04x)\n", __FUNCTION__, modeIx, code);
+        for (modeIx = 0; modeIx < desc->num_modes; modeIx++) {
+                struct vc_desc_mode *mode = &desc->modes[modeIx];
+                __u32 code = vc_core_format_to_mbus_code(mode->format, is_color, is_bgrg);
+                vc_dbg(dev, "%s(): Checking mode %u (code: 0x%04x)\n", __FUNCTION__, modeIx, code);
 
-                        for (codeIx = 0; codeIx < ARRAY_SIZE(desc->mbus_codes); codeIx++) {
-                                if (desc->mbus_codes[codeIx] == 0) {
-                                        desc->mbus_codes[codeIx] = code;
-                                        break;
-                                } 
-                                if (desc->mbus_codes[codeIx] == code) {
-                                        break;
-                                }
+                for (codeIx = 0; codeIx < ARRAY_SIZE(ctrl->mbus_codes); codeIx++) {
+                        if (ctrl->mbus_codes[codeIx] == 0) {
+                                ctrl->mbus_codes[codeIx] = code;
+                                break;
+                        } 
+                        if (ctrl->mbus_codes[codeIx] == code) {
+                                break;
                         }
                 }
-                vc_dbg(dev, "%s(): MBUS codes (0x%04x, 0x%04x, 0x%04x, 0x%04x)\n", __FUNCTION__, 
-                        desc->mbus_codes[0], desc->mbus_codes[1], desc->mbus_codes[2], desc->mbus_codes[3]);
         }
-
-        return desc->mbus_codes[index];
+        vc_dbg(dev, "%s(): MBUS codes (0x%04x, 0x%04x, 0x%04x, 0x%04x, 0x%04x)\n", __FUNCTION__, 
+                ctrl->mbus_codes[0], ctrl->mbus_codes[1], ctrl->mbus_codes[2], ctrl->mbus_codes[3], ctrl->mbus_codes[4]);
+        
 }
-EXPORT_SYMBOL(vc_core_enum_mbus_code);
+EXPORT_SYMBOL(vc_core_update_mbus_codes);
 
 int vc_core_try_format(struct vc_cam *cam, __u32 code)
 {
@@ -1097,6 +1094,7 @@ int vc_core_init(struct vc_cam *cam, struct i2c_client *client)
 
         vc_core_state_init(cam);
         vc_core_update_controls(cam);
+        vc_core_update_mbus_codes(cam);
         vc_core_print_mode(cam);
 
         vc_notice(&ctrl->client_mod->dev, "VC MIPI Core successfully initialized\n");

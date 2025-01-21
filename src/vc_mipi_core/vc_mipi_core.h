@@ -55,6 +55,7 @@ int debug = 3; // FS Workaround
 #define MAX_VC_MODES                    16
 #define MAX_BINNING_MODE_REGS           16
 
+#define MAX_MBUS_CODES                  5
 
 struct vc_desc_mode {
         __u8 data_rate[4];
@@ -106,7 +107,6 @@ struct vc_desc {
         __u16 num_modes;
         __u16 bytes_per_mode;
         struct vc_desc_mode modes[24];
-        __u32 mbus_codes[5];
 };
 
 typedef struct vc_control {
@@ -233,6 +233,7 @@ struct vc_ctrl {
         __s32 flash_toffset;
         // Special features
         __u32 flags;
+        __u32 mbus_codes[MAX_MBUS_CODES];
 };
 
 struct vc_state {
@@ -277,7 +278,7 @@ struct i2c_client *vc_mod_get_client(struct device *dev, struct i2c_adapter *ada
 void vc_core_print_debug(struct vc_cam *cam);                                   // Only used by NVIDIA driver
 struct device *vc_core_get_sen_device(struct vc_cam *cam);
 vc_mode vc_core_get_mode(struct vc_cam *cam);
-int vc_core_enum_mbus_code(struct vc_cam *cam, __u32 index);
+void vc_core_update_mbus_codes(struct vc_cam *cam);
 int vc_core_set_format(struct vc_cam *cam, __u32 code);
 __u32 vc_core_get_format(struct vc_cam *cam);
 int vc_core_set_frame(struct vc_cam *cam, __u32 left, __u32 top, __u32 width, __u32 height);
