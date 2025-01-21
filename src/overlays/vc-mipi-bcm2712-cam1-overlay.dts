@@ -47,7 +47,20 @@
 			};
 		};
 	};
+	fragment@2 {
+		target = <&i2c0mux>;
+		__overlay__ {
+			status = "okay";
 
+		};
+	};
+	fragment@3 {
+		target = <&i2c0if>;
+		__overlay__ {
+			status = "okay";
+
+		};
+	};
 	fragment@1001 {
 		target = <&i2c_csi_dsi>;
 		__dormant__ {
@@ -124,11 +137,10 @@
 		};
 	};
 	__overrides__ {
-        lanes1 =       <0>,"+1=1001=2001";
-		lanes2 =       <0>,"+1=1002=2002";
-		lanes4 =       <0>,"+1=1004=2004";
+        lanes1 =       <0>,"+1+2+3=1001=2001";
+		lanes2 =       <0>,"+1+2+3=1002=2002";
+		lanes4 =       <0>,"+1+2+3=1004=2004";		
+		lanes0 = 	   <0>,"";
 
     };
 };
-
-

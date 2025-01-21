@@ -21,6 +21,7 @@ include  config_vc-mipi-driver-bcm2712-raspi5.txt
 # cam0 #########################################################################
 ### For enabling the cam0, uncomment the following line 
 ### Setup the correct lanes fitting your sensor
+### 0 => disabled cam0
 ### 1 => lanes1
 ### 2 => lanes2
 ### 4 => lanes4
@@ -38,6 +39,7 @@ dtoverlay=vc-mipi-bcm2712-cam0,lanes4
 # cam1 #########################################################################
 ### For enabling the cam1, uncomment the following line 
 ### Setup the correct lanes fitting your sensor
+### 0 => disabled cam1
 ### 1 => lanes1
 ### 2 => lanes2
 ### 4 => lanes4
