@@ -40,6 +40,7 @@ int debug = 3; // FS Workaround
 
 #define FLAG_PREGIUS_S                  (1 << 18)
 #define FLAG_USE_BINNING_INDEX          (1 << 19)
+#define FLAG_FORMAT_PACKED              (1 << 20)
 
 #define GAIN_DISABLED                   0
 #define GAIN_LINEAR                     1
@@ -234,6 +235,7 @@ struct vc_ctrl {
         // Special features
         __u32 flags;
         __u32 mbus_codes[MAX_MBUS_CODES];
+        bool  packed_outputs;
 };
 
 struct vc_state {

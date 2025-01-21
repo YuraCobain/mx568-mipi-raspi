@@ -1073,6 +1073,8 @@ static int vc_probe(struct i2c_client *client)
         cam = &device->cam;
         cam->ctrl.client_sen = client;
 
+        cam->ctrl.flags |= FLAG_FORMAT_PACKED;
+
         // vc_setup_power_gpio(device);
         vc_set_power(device, 1);
 
