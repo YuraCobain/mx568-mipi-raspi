@@ -13,7 +13,7 @@ Example:
 
 00011100333 => 111 bits shifted from left, 333 bits shifted from top
 
-```shell
-v4l2-ctl -c -d <SUBDEV> roi_position=value
+``` shell
+v4l2-ctl -d <SUBDEV> -c roi_position=value
 ```
 ![Roi Position](./images/ROIPosition.svg)

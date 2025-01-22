@@ -1,12 +1,12 @@
 # Binning mode
 
 With the following v4l2 control the binning mode of the sensor can be set
-```
+```shell
 v4l2-ctl -c binning_mode=<index>
 ```
 The value determines the mode and depends on the capabilities of the sensor. There are predefined value pairs for the horizontal and the vertical binning factors, which are addressed by an index. <br>
 E.g. IMX412:
-```
+```shell
 v4l2-ctl -c binning_mode=1
 ```
 means horizontal binning is 1, vertical binning is 2 (1x2)
@@ -37,38 +37,18 @@ When binning with Pregius S (IMX56x), the sensor is getting monochrome.
 
 ## Examples
 ### V4L
-```
-$ v4l2-ctl --set-fmt-video=width=4032,height=3040 -c binning_mode=0
+```shell
+$ v4l2-ctl -d <SUBDEV> --set-fmt-video=width=4032,height=3040 -c binning_mode=0
 ```
 > IMX412 without binning.
 
 <br>
 
-```
-$ v4l2-ctl --set-fmt-video=width=2016,height=1520 -c binning_mode=2
+```shell
+$ v4l2-ctl -d <SUBDEV> --set-fmt-video=width=2016,height=1520 -c binning_mode=2
 ```
 > IMX412 with 2x2 binning.
 
 <br>
 
-```
-v4l2-ctl --set-selection=left=0,top=0,width=4128,height=3000 -c binning_mode=0
-```
-> IMX565 without binning.
-
-<br>
-
-```
-v4l2-ctl --set-selection=left=0,top=0,width=2048,height=1504 -c binning_mode=1
-```
-> IMX565 with 2x2 binning.
-
-<br>
-
-```
-v4l2-ctl --set-selection=left=128,top=0,width=1920,height=1504 -c binning_mode=1
-```
->IMX565 with 2x2 binning, indented by 128 pixel, the width is set accordingly. The indentation of 128 pixel is substracted from the maximum width for the binning mode.
-
-<br>
-
+For setting the offset, refer to [Roi Position](./roi_position.md)
