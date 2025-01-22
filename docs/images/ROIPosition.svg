@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="167.084mm"
+   height="82.161003mm"
+   viewBox="0 0 167.084 82.161003"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="ROI Position.svg"
+   inkscape:export-filename="ROIPosition.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.7500982"
+     inkscape:cx="167.31143"
+     inkscape:cy="252.63359"
+     inkscape:window-width="1864"
+     inkscape:window-height="1011"
+     inkscape:window-x="56"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="Arrow4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Arrow4"
+       markerWidth="3"
+       markerHeight="3"
+       viewBox="0 0 5 6"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="m 1,0 -3,3 h -2 l 3,-3 -3,-3 h 2 z"
+         id="path1741" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow4-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Arrow4"
+       markerWidth="3"
+       markerHeight="3"
+       viewBox="0 0 5 6"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="m 1,0 -3,3 h -2 l 3,-3 -3,-3 h 2 z"
+         id="path1741-5" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow4-7-5"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Arrow4"
+       markerWidth="3"
+       markerHeight="3"
+       viewBox="0 0 5 6"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="m 1,0 -3,3 h -2 l 3,-3 -3,-3 h 2 z"
+         id="path1741-5-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow4-7-5-9"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Arrow4"
+       markerWidth="3"
+       markerHeight="3"
+       viewBox="0 0 5 6"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="m 1,0 -3,3 h -2 l 3,-3 -3,-3 h 2 z"
+         id="path1741-5-6-1" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow4-7-5-9-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Arrow4"
+       markerWidth="3"
+       markerHeight="3"
+       viewBox="0 0 5 6"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="m 1,0 -3,3 h -2 l 3,-3 -3,-3 h 2 z"
+         id="path1741-5-6-1-0" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-25.903225,-30.021223)">
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.441;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow4-7-5-9-7);marker-end:url(#Arrow4-7-5-9-7)"
+       d="M 29.164749,101.52649 H 170.048"
+       id="path1639-3-2-2-9"
+       inkscape:transform-center-x="45.424583"
+       inkscape:transform-center-y="2.5120764" />
+    <rect
+       style="fill:#b3b3b3;stroke-width:0.264583"
+       id="rect111"
+       width="146.30321"
+       height="69.820137"
+       x="25.903225"
+       y="30.021223" />
+    <rect
+       style="fill:#1d1dff;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       id="rect217"
+       width="74.582535"
+       height="32.926701"
+       x="61.845711"
+       y="50.680119" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.58611px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       x="32.671619"
+       y="67.975494"
+       id="text1370"><tspan
+         sodipodi:role="line"
+         id="tspan1368"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.58611px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765"
+         x="32.671619"
+         y="67.975494">Offset Left</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.58611px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       x="80.192123"
+       y="41.678333"
+       id="text1370-3"><tspan
+         sodipodi:role="line"
+         id="tspan1368-6"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.58611px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765"
+         x="80.192123"
+         y="41.678333">Offset Top</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.5861px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       x="83.227127"
+       y="90.04303"
+       id="text1565"><tspan
+         sodipodi:role="line"
+         id="tspan1563"
+         style="stroke-width:0.765"
+         x="83.227127"
+         y="90.04303">Cropped Width</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.5861px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       x="142.91182"
+       y="64.913582"
+       id="text1569"><tspan
+         sodipodi:role="line"
+         id="tspan1567"
+         style="stroke-width:0.765"
+         x="142.91182"
+         y="64.913582">Cropped</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.765"
+         x="142.91182"
+         y="70.64621"
+         id="tspan1583">Height</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.5861px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       x="82.091797"
+       y="108.13686"
+       id="text1573"><tspan
+         sodipodi:role="line"
+         id="tspan1571"
+         style="stroke-width:0.765"
+         x="82.091797"
+         y="108.13686">Max width sensor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.5861px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+       x="173.88036"
+       y="64.574936"
+       id="text1577"><tspan
+         sodipodi:role="line"
+         id="tspan1575"
+         style="stroke-width:0.765"
+         x="173.88036"
+         y="64.574936">Max.</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.765"
+         x="173.88036"
+         y="70.307564"
+         id="tspan1579">height</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.765"
+         x="173.88036"
+         y="76.040184"
+         id="tspan1581">sensor</tspan></text>
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.2;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow4);marker-end:url(#Arrow4)"
+       d="M 75.625122,31.303291 V 49.293327"
+       id="path1639" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.47385;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow4-7);marker-end:url(#Arrow4-7)"
+       d="M 168.98104,31.426854 V 98.201679"
+       id="path1639-3" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.2;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow4-7-5);marker-end:url(#Arrow4-7-5)"
+       d="M 139.66785,50.770461 V 83.418528"
+       id="path1639-3-2" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.2;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow4-7-5-9);marker-end:url(#Arrow4-7-5-9)"
+       d="M 26.813668,60.617745 H 60.851683"
+       id="path1639-3-2-2"
+       inkscape:transform-center-x="10.974779"
+       inkscape:transform-center-y="2.5120764" />
+  </g>
+</svg>
