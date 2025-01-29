@@ -347,6 +347,27 @@ struct device *vc_core_get_mod_device(struct vc_cam *cam)
         return &cam->ctrl.client_mod->dev;
 }
 
+static int vc_core_fmt_to_str(__u32 code, char *buf)
+{
+        switch(code) {
+                        case MEDIA_BUS_FMT_Y8_1X8:       sprintf(buf, "Y8_1X8"); break;
+                        case MEDIA_BUS_FMT_Y10_1X10:     sprintf(buf, "Y10_1X10"); break;
+                        case MEDIA_BUS_FMT_Y12_1X12:     sprintf(buf, "Y12_1X12"); break;
+                        case MEDIA_BUS_FMT_Y14_1X14:     sprintf(buf, "Y14_1X14"); break;
+                        case MEDIA_BUS_FMT_SRGGB8_1X8:   sprintf(buf, "SRGGB8_1X8"); break;
+                        case MEDIA_BUS_FMT_SRGGB10_1X10: sprintf(buf, "SRGGB10_1X10"); break;
+                        case MEDIA_BUS_FMT_SRGGB12_1X12: sprintf(buf, "SRGGB12_1X12"); break;
+                        case MEDIA_BUS_FMT_SRGGB14_1X14: sprintf(buf, "SRGGB14_1X14"); break;
+                        case MEDIA_BUS_FMT_SGBRG8_1X8:   sprintf(buf, "SGBRG8_1X8"); break;
+                        case MEDIA_BUS_FMT_SGBRG10_1X10: sprintf(buf, "SGBRG10_1X10"); break;
+                        case MEDIA_BUS_FMT_SGBRG12_1X12: sprintf(buf, "SGBRG12_1X12"); break;
+                        case MEDIA_BUS_FMT_SGBRG14_1X14: sprintf(buf, "SGBRG14_1X14"); break;
+                        default: return -EINVAL;
+                }
+        return 0;
+
+}
+
 static int vc_core_get_fourcc_fmt(__u32 code, char *buf, bool packed)
 {
         if(packed)
@@ -569,7 +590,7 @@ int vc_core_try_format(struct vc_cam *cam, __u32 code)
         char fourcc[5];
         int index;
 
-        vc_core_get_fourcc_fmt(code, fourcc, cam->ctrl.flags & FLAG_FORMAT_PACKED);
+        vc_core_fmt_to_str(code, fourcc);
         vc_notice(dev, "%s(): Try format 0x%04x (%s, format: 0x%02x)\n", __FUNCTION__, code, fourcc, format);
 
         for (index = 0; index < desc->num_modes; index++) {
@@ -589,7 +610,7 @@ int vc_core_set_format(struct vc_cam *cam, __u32 code)
         struct device *dev = vc_core_get_sen_device(cam);
         char fourcc[5];
 
-        vc_core_get_fourcc_fmt(code, fourcc, cam->ctrl.flags & FLAG_FORMAT_PACKED);
+        vc_core_fmt_to_str(code, fourcc);
         vc_notice(dev, "%s(): Set format: 0x%04x (%s)\n", __FUNCTION__, code, fourcc);
 
         if (vc_core_try_format(cam, code)) {
@@ -613,7 +634,7 @@ __u32 vc_core_get_format(struct vc_cam *cam)
         __u32 code = state->format_code;
         char fourcc[5];
 
-        vc_core_get_fourcc_fmt(code, fourcc, cam->ctrl.flags & FLAG_FORMAT_PACKED);
+        vc_core_fmt_to_str(code, fourcc);
         vc_notice(dev, "%s(): Get format: 0x%04x (%s)\n", __FUNCTION__, code, fourcc);
 
         return code;
@@ -1300,7 +1321,7 @@ int vc_mod_set_mode(struct vc_cam *cam, int *reset)
                 return 0;
         }
 
-        vc_core_get_fourcc_fmt(state->format_code, fourcc, ctrl->flags & FLAG_FORMAT_PACKED);
+        vc_core_fmt_to_str(state->format_code, fourcc);
         vc_notice(dev, "%s(): Set module mode: %u (lanes: %u, format: %s, type: %s)\n", __FUNCTION__,
                 mode, num_lanes, fourcc, stype);
 
