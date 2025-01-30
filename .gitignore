@@ -28,3 +28,5 @@ build/
 *.deb
 *.buildinfo
 *.changes
+*.dsc
+*.tar.gz

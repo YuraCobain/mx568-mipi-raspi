@@ -111,20 +111,32 @@ configure_device_tree() {
 
         config_file="/boot/firmware/config_vc-mipi-driver-bcm2712.txt"
 
-        current_lanes=$(grep "^dtoverlay=vc-mipi-bcm2712-$camera,lanes" "$config_file" | awk -F 'lanes' '{print $2}')
-        
+        current_lanes=$(grep "^dtparam="$camera"_lanes" "$config_file" | awk -F 'lanes' '{print $2}')
+        current_manu=$(grep "^dtparam="$camera"_manu_" "$config_file" | awk -F '_manu_' '{print $2}')
 
         # Use whiptail to create a menu for selecting the number of lanes
         lanes=$(whiptail --menu "Select the number of lanes:" 15 200 3 --default-item "$current_lanes" --cancel-button "Cancel"\
         "1" "1 lane (i.e. OV7251, IMX296, IMX297)" \
         "2" "2 lanes (i.e.  OV9281, IMX264, IMX265, IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392)" \
         "4" "4 lanes (i.e. IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290,  IMX327, IMX335, IMX392, IMX412, IMX415, IMX462, IMX565, IMX566, IMX567, IMX568, IMX900)" 3>&1 1>&2 2>&3)
+        if [ $? -ne 0 ]; then
+            break
+        fi 
         if [ "$lanes" != "$current_lanes" ]; then
             change=true
-            sudo sed -i "s/^dtoverlay=vc-mipi-bcm2712-$camera,lanes[0-9]*/dtoverlay=vc-mipi-bcm2712-$camera,lanes$lanes/" "$config_file"
-
+            sudo sed -i "s/^dtparam=${camera}_lanes[0-9]*/dtparam=${camera}_lanes${lanes}/" "$config_file"
         fi
-
+        manufacturer=$(whiptail --menu "Manufacturer:" 15 200 3  --default-item "$current_manu" \
+        "sony" "SONY IMX" \
+        "ov" "OMNIVISION" \
+        3>&1 1>&2 2>&3)
+        if [ $? -ne 0 ]; then
+            break
+        fi 
+          if [ "$manufacturer" != "$current_manu" ]; then
+            change=true
+                sudo sed -i "s/^dtparam=${camera}_manu_.*/dtparam=${camera}_manu_${manufacturer}/" "$config_file"
+        fi
     done;
     if [ "$change" = true ]; then   
         whiptail --msgbox "Please reboot system" 8 40 --title "Success" 3>&1 1>&2 2>&3
@@ -292,10 +304,19 @@ dialog_set_roi()
     local subdev=$1
     local videodev=$2
 
-    # Use whiptail to prompt the user to enter width and height
-    width=$(whiptail --inputbox "Enter the desired width:" 8 40 1024 3>&1 1>&2 2>&3)
-    height=$(whiptail --inputbox "Enter the desired height:" 8 40 1024 3>&1 1>&2 2>&3)
+    resolution=$(v4l2-ctl -d $subdev --get-subdev-fmt | grep Width | awk -F ' ' '{ print $3 }' | tr '/' 'x' | xargs echo -n)
+    width=$(echo $resolution | awk -F 'x' '{ print $1 }')
+    height=$(echo $resolution | awk -F 'x' '{ print $2 }')
 
+    # Use whiptail to prompt the user to enter width and height
+    width=$(whiptail --inputbox "Enter the desired width:" 8 40 $width 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        break
+    fi 
+    height=$(whiptail --inputbox "Enter the desired height:" 8 40 $height 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        break
+    fi 
 
     echo "Selected subdevice: $subdev"
     echo "Width: $width, Height: $height, Subdevice: $subdev, Device: $videodev"

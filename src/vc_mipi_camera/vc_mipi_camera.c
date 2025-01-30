@@ -36,6 +36,14 @@ int vc_sd_s_frame_interval(struct v4l2_subdev *sd, struct v4l2_subdev_frame_inte
 int vc_ctrl_s_ctrl(struct v4l2_ctrl *ctrl);
 
 // --- Structures --------------------------------------------------------------
+
+
+enum pad_types {
+	IMAGE_PAD,
+	METADATA_PAD,
+	NUM_PADS
+};
+
 struct vc_device
 {
         struct v4l2_subdev sd;
@@ -195,9 +203,8 @@ static int vc_sd_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *control)
                 return 0; // TODO vc_sen_set_binning_mode(cam, control->value);
 
         case V4L2_CID_VC_ROI_POSITION:
-                left = control->value / 10000;
-                top = control->value - left * 10000;
-                return 0; // TODO vc_core_set_frame_position(cam, left, top);
+                return vc_core_live_roi(cam, control->value);
+
 #endif
         default:
                 vc_warn(dev, "%s(): Unkown control 0x%08x\n", __func__, control->id);
@@ -311,17 +318,31 @@ int vc_sd_enum_mbus_code(struct v4l2_subdev *sd, struct v4l2_subdev_state *state
 {
         struct vc_device *device = to_vc_device(sd);
         struct vc_cam *cam = to_vc_cam(sd);
+        int i;
+        for(i = 0; i < MAX_MBUS_CODES; i++)
+        {
+               if(cam->ctrl.mbus_codes[i] == 0)
+               break;
+        }
 
-        if (code->index != 0)
-                return -EINVAL;
+        if (code->pad >= NUM_PADS)
+		return -EINVAL;
+        if (code->pad == IMAGE_PAD) {
+		if (code->index >= i)
+			return -EINVAL;
 
-        mutex_lock(&device->mutex);
+		code->code = cam->ctrl.mbus_codes[code->index];
+	} else {
+		if (code->index > 0)
+			return -EINVAL;
 
-        code->code = vc_core_get_format(cam);
-
-        mutex_unlock(&device->mutex);
+		code->code = MEDIA_BUS_FMT_SENSOR_DATA;
+	}
 
         return 0;
+
+        
+
 }
 
 int vc_sd_enum_frame_size(struct v4l2_subdev *sd, struct v4l2_subdev_state *cfg, struct v4l2_subdev_frame_size_enum *fse)
@@ -834,7 +855,7 @@ static const struct v4l2_ctrl_config ctrl_roi_position = {
     .type = V4L2_CTRL_TYPE_INTEGER,
     .flags = V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
     .min = 0,
-    .max = 99999999,
+    .max = 199999999,
     .step = 1,
     .def = 0,
 };
@@ -1051,12 +1072,15 @@ static int vc_probe(struct i2c_client *client)
         cam = &device->cam;
         cam->ctrl.client_sen = client;
 
+
         // vc_setup_power_gpio(device);
         vc_set_power(device, 1);
 
         ret = vc_core_init(cam, client);
         if (ret)
                 goto error_power_off;
+        cam->ctrl.flags |= FLAG_FORMAT_PACKED; //Raspi packed formats for 10bit
+
 
         ret = vc_check_hwcfg(cam, dev); 
 

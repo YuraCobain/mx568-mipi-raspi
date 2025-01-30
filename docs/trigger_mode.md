@@ -1,11 +1,11 @@
 # Trigger Modes
 Activate a trigger mode by
-```
-v4l2-ctl -c trigger_mode=<trigger mode number>
+``` shell
+v4l2-ctl -d <SUBDEV> -c  trigger_mode=<trigger mode number>
 ```
 The trigger mode remains set until it is deactivated with 
-```
-v4l2-ctl -c trigger_mode=0
+``` shell
+v4l2-ctl -d <SUBDEV> -c trigger_mode=0
 ```
 Following you will find timing diagrams to illustrate the specific behavior of each mode.
 ## External and pulse width trigger mode (1 or 2)
@@ -20,9 +20,9 @@ Be aware that the maximum framerate depends on the readout time of the sensor PL
 
 ## Single trigger mode (4)
 Trigger the image acquisition by executing 
-```
-v4l2-ctl -c single_trigger=1
-```
+``` shell
+v4l2-ctl -d <SUBDEV> -c single_trigger=1
+``` 
 ![Single trigger mode](../docs/plantuml/tm_single.svg)
 
 ## Self and sync trigger mode (3 and 5)

@@ -1,11 +1,11 @@
 # IO Modes
 Activate an IO mode by
-```
-v4l2-ctl -c io_mode=<IO mode number>
+```shell
+v4l2-ctl -d <SUBDEV> -c io_mode=<IO mode number>
 ```
 The IO mode remains set until it is deactivated with 
-```
-v4l2-ctl -c io_mode=0
+```shell
+v4l2-ctl -d <SUBDEV> -c io_mode=0
 ```
 Following you will find timing diagrams to illustrate the specific behavior of each mode.
 

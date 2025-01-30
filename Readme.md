@@ -21,7 +21,7 @@ sudo apt install ./vc-mipi-driver-bcm2712_0.3.1_arm64.deb
 <b>or</b>
 Run the installation with manual packages
 ```
-sudo apt install dkms, linux-headers-generic, v4l-utils, whiptail 
+sudo apt install dkms linux-headers-generic v4l-utils whiptail
 sudo dpkg -i ./vc-mipi-driver-bcm2712_0.3.1_arm64.deb
 ```
 After a reboot the connected sensor(s) should be detected and visible as v4l2 capture devices
@@ -64,20 +64,36 @@ Here, there are also the possibilities to change the values of the controls and 
 
 
 # Support Tool
-
+## Installation
 The official support tool for the v4l2 driver is 
 [V4L2-Test](https://github.com/pmliquify/v4l2-test/tree/master)
 
 Please refer to the installation there. 
+## Usage
 For starting, you have to add the subdevice properly in order to set the controls by tool
-```bash
+```shell
 ./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat> -p 1 -d <device> -sd <subdevice>
 # Camera 0
 ./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat> -p 1 -d /dev/video0 -sd /dev/v4l-subdev2
 # Camera 1
 ./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat> -p 1 -d /dev/video8 -sd /dev/v4l-subdev5
-
 ```
+## Display live image
+
+For getting the live image on screen, add the argument `--fb`
+
+```shell
+./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat>  -d <device> -sd <subdevice> --fb
+# Camera 0
+./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat>  -d /dev/video0 -sd /dev/v4l-subdev2 --fb
+# Camera 1
+./v4l2-test stream -e <exposure> -g <gain> -f <pixelformat>  -d /dev/video8 -sd /dev/v4l-subdev5 --fb
+```
+
+On desktop version, first you have to switch to console mode `Ctrl + Alt + F1`
+
+![Console mode](./docs/RaspiDesktopFramebuffer.gif)
+
 # Controls
 1. [Black level](./docs/black_level.md)
 2. [IO Mode](./docs/io_mode.md)

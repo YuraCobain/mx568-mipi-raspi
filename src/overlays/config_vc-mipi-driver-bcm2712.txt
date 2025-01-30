@@ -21,9 +21,10 @@ include  config_vc-mipi-driver-bcm2712-raspi5.txt
 # cam0 #########################################################################
 ### For enabling the cam0, uncomment the following line 
 ### Setup the correct lanes fitting your sensor
-### 1 => lanes1
-### 2 => lanes2
-### 4 => lanes4
+### disabled    => cam0_lanes0
+### 1           => cam0_lanes1 
+### 2           => cam0_lanes2
+### 4           => cam0_lanes4
 ### ------------------------------------------------------------------------------------------------
 ###  Supported number of lanes
 ### -----+------------------------------------------------------------------------------------------
@@ -31,16 +32,25 @@ include  config_vc-mipi-driver-bcm2712-raspi5.txt
 ###  2   | OV9281, IMX264, IMX265
 ###  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392, 
 ###      | IMX412, IMX415, IMX462, IMX565, IMX566, IMX567, IMX568, IMX900
+### ------------------------------------------------------------------------------------------------
+###  Sensor manufacturer
+### -----+------------------------------------------------------------------------------------------
+### Omnivision (OV7251,OV9281)    => cam0_manu_ov
+### Sony(IMX...       )           => cam0_manu_sony
 
-dtoverlay=vc-mipi-bcm2712-cam0,lanes4
+
+dtoverlay=vc-mipi-bcm2712-cam0
+dtparam=cam0_lanes4
+dtparam=cam0_manu_sony
 
 ################################################################################
 # cam1 #########################################################################
 ### For enabling the cam1, uncomment the following line 
 ### Setup the correct lanes fitting your sensor
-### 1 => lanes1
-### 2 => lanes2
-### 4 => lanes4
+### disabled    => cam1_lanes0
+### 1           => cam1_lanes1 
+### 2           => cam1_lanes2
+### 4           => cam1_lanes4
 ### ------------------------------------------------------------------------------------------------
 ###  Supported number of lanes
 ### -----+------------------------------------------------------------------------------------------
@@ -48,8 +58,15 @@ dtoverlay=vc-mipi-bcm2712-cam0,lanes4
 ###  2   | OV9281, IMX264, IMX265
 ###  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392, 
 ###      | IMX412, IMX415, IMX462, IMX565, IMX566, IMX567, IMX568, IMX900
+### ------------------------------------------------------------------------------------------------
+###  Sensor manufacturer
+### -----+------------------------------------------------------------------------------------------
+### Omnivision (OV7251,OV9281)    => cam1_manu_ov
+### Sony(IMX...       )           => cam1_manu_sony
 
-dtoverlay=vc-mipi-bcm2712-cam1,lanes4
+dtoverlay=vc-mipi-bcm2712-cam1
+dtparam=cam1_lanes4
+dtparam=cam1_manu_sony
 
 
 ################################################################################
