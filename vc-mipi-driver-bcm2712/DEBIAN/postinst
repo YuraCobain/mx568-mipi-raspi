@@ -7,7 +7,7 @@
 set -e
 TEST=0
 NAME="vc-mipi-driver-bcm2712"
-VERSION="0.3.0"
+VERSION="0.5.0"
 PACKAGE_NAME=$NAME
 DEB_NAME=$(echo $PACKAGE_NAME | sed 's,_,-,')
 CVERSION=`dpkg-query -W -f='${Version}' $DEB_NAME | awk -F "-" '{print $1}' | cut -d\: -f2`

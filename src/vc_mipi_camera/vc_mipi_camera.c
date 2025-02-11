@@ -3,14 +3,14 @@
 #include <linux/gpio/consumer.h>
 #include <linux/pm_runtime.h>
 #include <linux/version.h>
+#include <linux/of_graph.h> 
 
-#include <linux/of_graph.h> //MS
 #include <media/v4l2-subdev.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-fwnode.h>
 #include <media/v4l2-event.h>
 
-#define VERSION "0.2.1"
+#define VERSION "0.5.0"
 
 // --- Prototypes --------------------------------------------------------------
 static int vc_sd_s_power(struct v4l2_subdev *sd, int on);
@@ -165,7 +165,7 @@ static int vc_sd_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *control)
 {
         struct vc_cam *cam = to_vc_cam(sd);
         struct device *dev = vc_core_get_sen_device(cam);
-        __u32 left, top;
+        // __u32 left, top;
 
         switch (control->id)
         {
@@ -316,7 +316,6 @@ static int vc_sd_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_state *state
 
 int vc_sd_enum_mbus_code(struct v4l2_subdev *sd, struct v4l2_subdev_state *state, struct v4l2_subdev_mbus_code_enum *code)
 {
-        struct vc_device *device = to_vc_device(sd);
         struct vc_cam *cam = to_vc_cam(sd);
         int i;
         for(i = 0; i < MAX_MBUS_CODES; i++)
@@ -679,21 +678,6 @@ static int vc_ctrl_init_ctrl_special(struct vc_device *device, struct v4l2_ctrl_
         return 0;
 }
 
-static int vc_ctrl_init_ctrl_config(struct vc_device *device, struct v4l2_ctrl_handler *hdl,const struct v4l2_ctrl_config *ctrl_config)
-{
-        struct i2c_client *client = device->cam.ctrl.client_sen;
-        struct device *dev = &client->dev;
-        struct v4l2_ctrl *ctrl;
-
-        ctrl = v4l2_ctrl_new_std(&device->ctrl_handler, &vc_ctrl_ops, ctrl_config->id, ctrl_config->min, ctrl_config->max, 1, ctrl_config->def);
-        if (ctrl == NULL)
-        {
-                vc_err(dev, "%s(): Failed to init 0x%08x ctrl\n", __func__, ctrl_config->id);
-                return -EIO;
-        }
-
-        return 0;
-}
 
 static int vc_ctrl_init_ctrl_lfreq(struct vc_device *device, struct v4l2_ctrl_handler *hdl, int id, struct vc_control64 *control)
 {
@@ -1079,7 +1063,7 @@ static int vc_probe(struct i2c_client *client)
         ret = vc_core_init(cam, client);
         if (ret)
                 goto error_power_off;
-        cam->ctrl.flags |= FLAG_FORMAT_PACKED; //Raspi packed formats for 10bit
+
 
 
         ret = vc_check_hwcfg(cam, dev); 
