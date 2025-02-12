@@ -43,8 +43,6 @@
 				
 				port {
 					vc_mipi_cam1_ep: endpoint {
-						clock-noncontinuous;
-						clock-lanes = <0x00>;
 						remote-endpoint = <&csi2_ep>;
 						data-lanes = <1 2 3 4>;
 

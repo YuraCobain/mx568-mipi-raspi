@@ -12,7 +12,6 @@
 ### WRONG SETTINGS MAY LEAD TO MALFUNCTION OR DAMAGE YOUR SYSTEM!
 ###
 
-include  config_vc-mipi-driver-bcm2712-raspi5.txt
 
 
 
