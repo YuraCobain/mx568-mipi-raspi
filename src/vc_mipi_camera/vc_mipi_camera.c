@@ -577,16 +577,7 @@ static void vc_update_clk_rates(struct vc_cam *cam)
 
 // *** Initialisation *********************************************************
 
-// static void vc_setup_power_gpio(struct vc_device *device)
-// {
-//         struct device *dev = &device->cam.ctrl.client_sen->dev;
 
-//         device->power_gpio = devm_gpiod_get_optional(dev, "power", GPIOD_OUT_HIGH);
-//         if (IS_ERR(device->power_gpio)) {
-//                 vc_err(dev, "%s(): Failed to setup power-gpio\n", __func__);
-//                 device->power_gpio = NULL;
-//         }
-// }
 
 static int __maybe_unused vc_check_hwcfg(struct vc_cam *cam, struct device *dev)
 {
@@ -610,7 +601,6 @@ static int __maybe_unused vc_check_hwcfg(struct vc_cam *cam, struct device *dev)
 
         /* Set and check the number of MIPI CSI2 data lanes */
         ret = vc_core_set_num_lanes(cam, ep_cfg.bus.mipi_csi2.num_data_lanes);
-        ;
 
 error_out:
         v4l2_fwnode_endpoint_free(&ep_cfg);
@@ -1057,7 +1047,6 @@ static int vc_probe(struct i2c_client *client)
         cam->ctrl.client_sen = client;
 
 
-        // vc_setup_power_gpio(device);
         vc_set_power(device, 1);
 
         ret = vc_core_init(cam, client);
@@ -1071,7 +1060,6 @@ static int vc_probe(struct i2c_client *client)
         if (ret)
                 goto error_power_off;
 
-        mutex_init(&device->mutex);
         vc_mod_set_mode(cam, &ret); 
         ret = vc_sd_init(device);
         if (ret)
