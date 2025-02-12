@@ -10,7 +10,6 @@ export VERSION_DEB_PACKAGE=$(echo $VERSION_DEB_PACKAGE | sed 's/v//')
 
 
 cp -r debian_package build/debian
-cp -r vc-mipi-driver-bcm2712 build/debian
 mkdir -p build/debian
 cp -r src build/
 
